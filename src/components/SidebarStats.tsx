@@ -1,0 +1,78 @@
+import {
+  formatCurrency,
+  formatInteger,
+  formatMonthYear,
+  formatPercent,
+} from '../lib/format';
+import type { MortgageInputs, MortgageSummary } from '../lib/mortgage';
+
+import { StatCard } from './ui/StatCard';
+
+export function SidebarStats(props: {
+  inputs: MortgageInputs;
+  summary: MortgageSummary;
+  monthlyTaxesCosts: number;
+  totalMonthlyPayment: number;
+}) {
+  const { inputs, summary, monthlyTaxesCosts, totalMonthlyPayment } = props;
+
+  const hasExtraPayments =
+    inputs.extraMonthly > 0 ||
+    inputs.extraYearly > 0 ||
+    inputs.extraOneTime > 0;
+
+  const payoffText = formatMonthYear(
+    summary.payoffMonthIndex0,
+    summary.payoffYear,
+  );
+  const payoffDurationYears = Math.floor(summary.monthsToPayoff / 12);
+  const payoffDurationMonths = summary.monthsToPayoff % 12;
+
+  return (
+    <div className="grid gap-4">
+      <StatCard
+        title="Monthly payment"
+        value={formatCurrency(totalMonthlyPayment)}
+        subtitle={
+          inputs.includeTaxesCosts
+            ? `${formatCurrency(summary.scheduledMonthlyPI)} P&I + ${formatCurrency(monthlyTaxesCosts)} taxes/costs`
+            : `${formatCurrency(summary.scheduledMonthlyPI)} principal & interest`
+        }
+        accent="sky"
+      />
+      <StatCard
+        title="Loan amount"
+        value={formatCurrency(summary.loanAmount)}
+        subtitle={`${formatPercent(summary.downPaymentPercent, 2)} down (${formatCurrency(summary.downPaymentAmount)})`}
+        accent="violet"
+      />
+      <StatCard
+        title="Payoff"
+        value={payoffText}
+        subtitle={`In ${formatInteger(payoffDurationYears)} years ${formatInteger(payoffDurationMonths)} months`}
+        accent="emerald"
+      />
+      <StatCard
+        title="Interest saved"
+        value={formatCurrency(summary.interestSaved)}
+        subtitle={`${formatInteger(summary.monthsSaved)} months sooner vs. no extra payments`}
+        accent="amber"
+      />
+
+      {hasExtraPayments && summary.interestSaved > 0 ? (
+        <div className="rounded-3xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-100">
+          With the extra payment(s), the loan will be paid off in{' '}
+          <span className="font-bold">
+            {formatInteger(payoffDurationYears)} years{' '}
+            {formatInteger(payoffDurationMonths)} months
+          </span>
+          , and{' '}
+          <span className="font-bold">
+            {formatCurrency(summary.interestSaved)}
+          </span>{' '}
+          interest will be saved.
+        </div>
+      ) : null}
+    </div>
+  );
+}

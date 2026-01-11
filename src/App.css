@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Enable class-based dark mode (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   margin: 0;
   color: #0f172a;
@@ -17,10 +20,33 @@ body {
   background: #ffffff;
 }
 
+.dark body {
+  color: #e2e8f0;
+  background: #020617;
+}
+
+@media screen {
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 900px;
+    contain: layout paint style;
+  }
+}
+
 @media print {
   html,
   body {
     background: #fff !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-page-break {
+    break-before: page;
+    page-break-before: always;
   }
 
   /* Let gradients and subtle colors print (browser-dependent) */

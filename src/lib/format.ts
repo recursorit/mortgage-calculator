@@ -1,10 +1,29 @@
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+const integerFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 0,
+});
+const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'short' });
+const monthNames = Array.from({ length: 12 }).map((_, monthIndex0) =>
+  monthFormatter.format(new Date(2000, monthIndex0, 1)),
+);
+
+function getCurrencyFormatter(currency: string): Intl.NumberFormat {
+  const key = currency || 'USD';
+  const existing = currencyFormatters.get(key);
+  if (existing) return existing;
+
+  const created = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: key,
+    maximumFractionDigits: 2,
+  });
+  currencyFormatters.set(key, created);
+  return created;
+}
+
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
   if (!Number.isFinite(amount)) return '—';
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return getCurrencyFormatter(currency).format(amount);
 }
 
 export function formatPercent(value: number, fractionDigits: number = 3): string {
@@ -14,14 +33,11 @@ export function formatPercent(value: number, fractionDigits: number = 3): string
 
 export function formatInteger(value: number): string {
   if (!Number.isFinite(value)) return '—';
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(
-    Math.round(value),
-  );
+  return integerFormatter.format(Math.round(value));
 }
 
 export function monthShortName(monthIndex0: number): string {
-  const month = new Date(2000, monthIndex0, 1);
-  return month.toLocaleString(undefined, { month: 'short' });
+  return monthNames[monthIndex0] ?? '';
 }
 
 export function formatMonthYear(monthIndex0: number, year: number): string {
