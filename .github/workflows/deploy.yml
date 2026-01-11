@@ -17,6 +17,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # If you stored PUBLIC_FIREBASE_* as Environment variables/secrets under
+    # the "github-pages" environment, the build job must also target it.
+    environment:
+      name: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +33,13 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Debug Firebase env presence
+        run: |
+          echo "PUBLIC_FIREBASE_API_KEY present?"; [ -n "${PUBLIC_FIREBASE_API_KEY}" ] && echo yes || echo no
+          echo "PUBLIC_FIREBASE_AUTH_DOMAIN present?"; [ -n "${PUBLIC_FIREBASE_AUTH_DOMAIN}" ] && echo yes || echo no
+          echo "PUBLIC_FIREBASE_PROJECT_ID present?"; [ -n "${PUBLIC_FIREBASE_PROJECT_ID}" ] && echo yes || echo no
+          echo "PUBLIC_FIREBASE_APP_ID present?"; [ -n "${PUBLIC_FIREBASE_APP_ID}" ] && echo yes || echo no
 
       - name: Build
         env:
