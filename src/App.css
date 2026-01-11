@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter,
+    Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  background: #ffffff;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  /* Let gradients and subtle colors print (browser-dependent) */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
