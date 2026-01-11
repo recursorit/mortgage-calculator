@@ -84,14 +84,14 @@ export function ScheduleSection(props: {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+    <div className="max-w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
       <SectionHeader
         title="Full schedule"
         description="Payments grouped by loan year (Year 1 = first 12 payments)."
         right={
           loanYearGroups.length ? (
-            <div className="flex items-center gap-2">
-              <div className="w-56">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="w-full sm:w-56">
                 <Select
                   value={scheduleJumpYearClamped}
                   onChange={(e) => {
@@ -111,35 +111,37 @@ export function ScheduleSection(props: {
                 </Select>
               </div>
 
-              <button
-                type="button"
-                onClick={exportScheduleCsv}
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
-              >
-                Export CSV
-              </button>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+                <button
+                  type="button"
+                  onClick={exportScheduleCsv}
+                  className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto"
+                >
+                  Export CSV
+                </button>
 
-              <button
-                type="button"
-                onClick={exportPdf}
-                disabled={isPdfBusy}
-                className={
-                  'inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800'
-                }
-              >
-                {isPdfBusy ? 'Working…' : 'Export PDF'}
-              </button>
+                <button
+                  type="button"
+                  onClick={exportPdf}
+                  disabled={isPdfBusy}
+                  className={
+                    'inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto'
+                  }
+                >
+                  {isPdfBusy ? 'Working…' : 'Export PDF'}
+                </button>
 
-              <button
-                type="button"
-                onClick={printPdf}
-                disabled={isPdfBusy}
-                className={
-                  'inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800'
-                }
-              >
-                Print PDF
-              </button>
+                <button
+                  type="button"
+                  onClick={printPdf}
+                  disabled={isPdfBusy}
+                  className={
+                    'col-span-2 inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:col-span-1 sm:w-auto'
+                  }
+                >
+                  Print PDF
+                </button>
+              </div>
             </div>
           ) : null
         }
@@ -205,28 +207,25 @@ export function ScheduleSection(props: {
               </summary>
 
               <div className="border-t border-slate-200 dark:border-slate-800">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                {/* Contained horizontal scrolling: table scrolls, page doesn't */}
+                <div className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain">
+                  <table className="min-w-[920px] w-full text-left text-sm">
                     <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                       <tr>
-                        <th className="px-3 py-2">Month</th>
-                        <th className="px-3 py-2">Total</th>
-                        <th className="px-3 py-2 hidden md:table-cell">
-                          P&amp;I
-                        </th>
-                        <th className="px-3 py-2 hidden md:table-cell">
-                          Extra
-                        </th>
-                        <th className="px-3 py-2 hidden md:table-cell">
+                        <th className="px-3 py-2 whitespace-nowrap">Month</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Total</th>
+                        <th className="px-3 py-2 whitespace-nowrap">P&amp;I</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Extra</th>
+                        <th className="px-3 py-2 whitespace-nowrap">
                           Taxes/costs
                         </th>
-                        <th className="px-3 py-2 hidden lg:table-cell">
+                        <th className="px-3 py-2 whitespace-nowrap">
                           Interest
                         </th>
-                        <th className="px-3 py-2 hidden lg:table-cell">
+                        <th className="px-3 py-2 whitespace-nowrap">
                           Principal
                         </th>
-                        <th className="px-3 py-2">Balance</th>
+                        <th className="px-3 py-2 whitespace-nowrap">Balance</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -235,32 +234,32 @@ export function ScheduleSection(props: {
                           key={r.index}
                           className="hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
-                          <td className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-50">
+                          <td className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                             {formatMonthYear(r.monthIndex0, r.year)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(
                               r.totalToLender + monthlyTaxesCosts,
                             )}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 hidden md:table-cell">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(r.paymentPI)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 hidden md:table-cell">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(r.extraPrincipal)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 hidden md:table-cell">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {monthlyTaxesCosts
                               ? formatCurrency(monthlyTaxesCosts)
                               : '—'}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 hidden lg:table-cell">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(r.interest)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 hidden lg:table-cell">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(r.principal + r.extraPrincipal)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(r.balance)}
                           </td>
                         </tr>
@@ -268,30 +267,30 @@ export function ScheduleSection(props: {
                     </tbody>
                     <tfoot className="bg-slate-50 text-sm dark:bg-slate-950/40">
                       <tr>
-                        <td className="px-3 py-2 font-extrabold text-slate-900 dark:text-slate-50">
+                        <td className="px-3 py-2 font-extrabold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           Total
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.totalPayment)}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 hidden md:table-cell">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.pi)}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 hidden md:table-cell">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.extra)}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 hidden md:table-cell">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {g.totals.taxesCosts
                             ? formatCurrency(g.totals.taxesCosts)
                             : '—'}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 hidden lg:table-cell">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.interest)}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 hidden lg:table-cell">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.principal)}
                         </td>
-                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50">
+                        <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.endBalance)}
                         </td>
                       </tr>

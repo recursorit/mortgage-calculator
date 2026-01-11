@@ -23,9 +23,16 @@ export function LabeledField(props: {
 }
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const { onFocus, ...rest } = props;
   return (
     <input
-      {...props}
+      {...rest}
+      onFocus={(e) => {
+        onFocus?.(e);
+        if (e.currentTarget.value === '0') {
+          e.currentTarget.select();
+        }
+      }}
       className={
         'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm outline-none ' +
         'transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100 ' +

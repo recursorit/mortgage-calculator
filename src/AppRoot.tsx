@@ -52,12 +52,12 @@ export default function AppRoot() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(to_bottom,#ffffff,#f8fafc)] dark:bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.12),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.10),transparent_55%),linear-gradient(to_bottom,#020617,#0b1220)]">
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(to_bottom,#ffffff,#f8fafc)] dark:bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.12),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.10),transparent_55%),linear-gradient(to_bottom,#020617,#0b1220)]">
       <HeaderBar onReset={onReset} />
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="grid gap-6 lg:grid-cols-12 print:hidden">
-          <section className="lg:col-span-8 print:hidden">
+          <section className="min-w-0 lg:col-span-8 print:hidden">
             <div className="space-y-6">
               <InputsPanel />
 
@@ -69,7 +69,7 @@ export default function AppRoot() {
             </div>
           </section>
 
-          <section className="lg:col-span-4">
+          <section className="min-w-0 lg:col-span-4">
             <SidebarStats
               inputs={deferredInputs}
               summary={summary}
@@ -78,7 +78,7 @@ export default function AppRoot() {
             />
           </section>
 
-          <section className="lg:col-span-12">
+          <section className="min-w-0 lg:col-span-12">
             <ScheduleSection
               schedule={schedule}
               loanYearGroups={loanYearGroups}

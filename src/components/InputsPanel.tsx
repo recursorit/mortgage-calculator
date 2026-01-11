@@ -197,6 +197,7 @@ export function InputsPanel() {
                 value={propertyTaxAnnualRaw}
                 onChange={(e) => setPropertyTaxAnnualRaw(e.target.value)}
                 aria-label="Property taxes per year"
+                placeholder="0"
                 disabled={!includeTaxesCosts}
               />
             </LabeledField>
@@ -206,6 +207,7 @@ export function InputsPanel() {
                 value={homeInsuranceAnnualRaw}
                 onChange={(e) => setHomeInsuranceAnnualRaw(e.target.value)}
                 aria-label="Home insurance per year"
+                placeholder="0"
                 disabled={!includeTaxesCosts}
               />
             </LabeledField>
@@ -215,6 +217,7 @@ export function InputsPanel() {
                 value={pmiMonthlyRaw}
                 onChange={(e) => setPmiMonthlyRaw(e.target.value)}
                 aria-label="PMI per month"
+                placeholder="0"
                 disabled={!includeTaxesCosts}
               />
             </LabeledField>
@@ -224,6 +227,7 @@ export function InputsPanel() {
                 value={hoaMonthlyRaw}
                 onChange={(e) => setHoaMonthlyRaw(e.target.value)}
                 aria-label="HOA per month"
+                placeholder="0"
                 disabled={!includeTaxesCosts}
               />
             </LabeledField>
@@ -233,6 +237,7 @@ export function InputsPanel() {
                 value={otherCostsMonthlyRaw}
                 onChange={(e) => setOtherCostsMonthlyRaw(e.target.value)}
                 aria-label="Other costs per month"
+                placeholder="0"
                 disabled={!includeTaxesCosts}
               />
             </LabeledField>
@@ -253,6 +258,7 @@ export function InputsPanel() {
               value={extraMonthlyRaw}
               onChange={(e) => setExtraMonthlyRaw(e.target.value)}
               aria-label="Extra monthly payment"
+              placeholder="0"
             />
           </LabeledField>
 
@@ -262,6 +268,7 @@ export function InputsPanel() {
               value={extraYearlyRaw}
               onChange={(e) => setExtraYearlyRaw(e.target.value)}
               aria-label="Extra yearly payment"
+              placeholder="0"
             />
           </LabeledField>
 
@@ -296,6 +303,7 @@ export function InputsPanel() {
               value={extraOneTimeRaw}
               onChange={(e) => setExtraOneTimeRaw(e.target.value)}
               aria-label="One time extra payment"
+              placeholder="0"
             />
           </LabeledField>
 

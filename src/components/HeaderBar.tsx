@@ -13,7 +13,7 @@ export function HeaderBar(props: { onReset: () => void }) {
 
   return (
     <header className="border-b border-slate-200/70 bg-white/70 backdrop-blur print:border-0 print:bg-white dark:border-slate-800/70 dark:bg-slate-950/60">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6">
         <div>
           <div className="inline-flex items-center gap-2">
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-sky-500 to-fuchsia-500" />
@@ -28,7 +28,7 @@ export function HeaderBar(props: { onReset: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 print:hidden">
+        <div className="flex w-full flex-wrap items-center gap-2 print:hidden sm:w-auto sm:justify-end">
           <button
             type="button"
             onClick={toggleTheme}

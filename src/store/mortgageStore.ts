@@ -87,33 +87,58 @@ function getCurrentYear(): number {
   return new Date().getFullYear();
 }
 
+const ZERO_TO_EMPTY_STRING_KEYS = [
+  'homePriceRaw',
+  'downPaymentRaw',
+  'loanTermYearsRaw',
+  'interestRateRaw',
+  'propertyTaxAnnualRaw',
+  'homeInsuranceAnnualRaw',
+  'pmiMonthlyRaw',
+  'hoaMonthlyRaw',
+  'otherCostsMonthlyRaw',
+  'extraMonthlyRaw',
+  'extraYearlyRaw',
+  'extraOneTimeRaw',
+] as const;
+
+function migrateZeroStringsToEmpty(
+  state: MortgageFormState,
+): MortgageFormState {
+  const next: MortgageFormState = { ...state };
+  for (const key of ZERO_TO_EMPTY_STRING_KEYS) {
+    if (next[key] === '0') next[key] = '';
+  }
+  return next;
+}
+
 export function getDefaultMortgageFormState(): MortgageFormState {
   const currentYear = getCurrentYear();
   return {
     theme: 'light',
 
-    homePriceRaw: '0',
+    homePriceRaw: '',
     downPaymentType: 'percent',
-    downPaymentRaw: '0',
-    loanTermYearsRaw: '0',
-    interestRateRaw: '0',
+    downPaymentRaw: '',
+    loanTermYearsRaw: '',
+    interestRateRaw: '',
 
     startMonthIndex0: 0,
     startYearRaw: String(currentYear),
 
     includeTaxesCosts: false,
-    propertyTaxAnnualRaw: '0',
-    homeInsuranceAnnualRaw: '0',
-    pmiMonthlyRaw: '0',
-    hoaMonthlyRaw: '0',
-    otherCostsMonthlyRaw: '0',
+    propertyTaxAnnualRaw: '',
+    homeInsuranceAnnualRaw: '',
+    pmiMonthlyRaw: '',
+    hoaMonthlyRaw: '',
+    otherCostsMonthlyRaw: '',
 
-    extraMonthlyRaw: '0',
-    extraYearlyRaw: '0',
+    extraMonthlyRaw: '',
+    extraYearlyRaw: '',
     extraYearlyMonthIndex0: 0,
     extraYearlyStartYearRaw: String(currentYear + 1),
 
-    extraOneTimeRaw: '0',
+    extraOneTimeRaw: '',
     extraOneTimeMonthIndex0: 0,
     extraOneTimeYearRaw: String(currentYear),
 
@@ -290,6 +315,16 @@ export const useMortgageStore = create<MortgageStore>()(
     {
       name: STORE_KEY,
       storage: persistedStorage,
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version >= 1) return persisted;
+
+        const merged: MortgageFormState = {
+          ...getDefaultMortgageFormState(),
+          ...persisted,
+        };
+        return migrateZeroStringsToEmpty(merged);
+      },
       partialize: (state) => ({
         theme: state.theme,
 
