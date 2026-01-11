@@ -1,92 +1,142 @@
-import { useDeferredValue, useMemo } from 'react';
-
 import './App.css';
 
-import { calculateMortgage } from './lib/mortgage';
+import { useCallback, useEffect, useState } from 'react';
+import { HashRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 
-import { HeaderBar } from './components/HeaderBar';
-import { InputsPanel } from './components/InputsPanel';
-import { CostSummaryCard } from './components/CostSummaryCard';
-import { SidebarStats } from './components/SidebarStats';
-import { ScheduleSection } from './components/ScheduleSection';
+import { MortgageCalculatorPage } from './pages/MortgageCalculatorPage';
+import { RefinanceBreakEvenPage } from './pages/RefinanceBreakEvenPage';
+import { ScenarioComparisonPage } from './pages/ScenarioComparisonPage';
 
-import { useMortgageInputs } from './hooks/useMortgageInputs';
-import { useLoanYearGroups } from './hooks/useLoanYearGroups';
-import { useMortgageStore } from './store/mortgageStore';
+function SideNav(props: { onNavigate?: () => void }) {
+  const onNavigate = props.onNavigate;
+
+  const linkClassName = useCallback(
+    ({ isActive }: { isActive: boolean }) =>
+      'rounded-2xl px-3 py-2 text-sm font-bold transition focus:outline-none focus:ring-4 ' +
+      (isActive
+        ? 'bg-slate-900 text-white focus:ring-slate-200 dark:bg-white dark:text-slate-900 dark:focus:ring-slate-800'
+        : 'text-slate-700 hover:bg-slate-50 focus:ring-slate-200 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-slate-800'),
+    [],
+  );
+
+  return (
+    <div className="flex grow flex-col gap-y-6 overflow-y-auto border-r border-slate-200/70 bg-white/70 px-4 pb-4 pt-5 backdrop-blur dark:border-slate-800/70 dark:bg-slate-950/60">
+      <div className="flex items-center gap-3 px-2">
+        <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-sky-500 to-fuchsia-500" />
+        <div className="min-w-0">
+          <div className="truncate text-sm font-black tracking-tight text-slate-900 dark:text-slate-50">
+            Mortgage Calculator
+          </div>
+          <div className="truncate text-xs text-slate-600 dark:text-slate-300">
+            Tools & scenarios
+          </div>
+        </div>
+      </div>
+
+      <nav className="px-2">
+        <div className="grid gap-1">
+          <NavLink to="/" end className={linkClassName} onClick={onNavigate}>
+            Mortgage Calculator
+          </NavLink>
+
+          <NavLink
+            to="/scenarios"
+            className={linkClassName}
+            onClick={onNavigate}
+          >
+            Scenario Comparison
+          </NavLink>
+
+          <NavLink
+            to="/refinance"
+            className={linkClassName}
+            onClick={onNavigate}
+          >
+            Refinance break-even
+          </NavLink>
+        </div>
+      </nav>
+    </div>
+  );
+}
 
 export default function AppRoot() {
-  const inputs = useMortgageInputs();
-  const deferredInputs = useDeferredValue(inputs);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  const resetToDefaults = useMortgageStore((s) => s.resetToDefaults);
-  const clearPersisted = useMortgageStore((s) => s.clearPersisted);
+  const openMobileNav = useCallback(() => setIsMobileNavOpen(true), []);
+  const closeMobileNav = useCallback(() => setIsMobileNavOpen(false), []);
 
-  const calc = useMemo(
-    () => calculateMortgage(deferredInputs),
-    [deferredInputs],
-  );
-  const { summary, schedule } = calc;
+  useEffect(() => {
+    if (!isMobileNavOpen) return;
 
-  const monthlyTaxesCosts = deferredInputs.includeTaxesCosts
-    ? summary.monthlyTaxesCosts
-    : 0;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMobileNav();
+    };
 
-  const totalMonthlyPayment = summary.scheduledMonthlyPI + monthlyTaxesCosts;
-
-  const remainingBalance = schedule.length
-    ? schedule[schedule.length - 1].balance
-    : 0;
-
-  const loanYearGroups = useLoanYearGroups({
-    schedule,
-    monthlyTaxesCosts,
-    loanAmount: summary.loanAmount,
-  });
-
-  const onReset = () => {
-    const confirmed = window.confirm('Reset all inputs to fresh defaults?');
-    if (!confirmed) return;
-
-    clearPersisted();
-    resetToDefaults();
-  };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [closeMobileNav, isMobileNavOpen]);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(to_bottom,#ffffff,#f8fafc)] dark:bg-[radial-gradient(1200px_600px_at_0%_0%,rgba(56,189,248,0.12),transparent_60%),radial-gradient(900px_500px_at_100%_0%,rgba(217,70,239,0.10),transparent_55%),linear-gradient(to_bottom,#020617,#0b1220)]">
-      <HeaderBar onReset={onReset} />
+      <HashRouter>
+        <div>
+          <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+            <SideNav />
+          </aside>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-        <div className="grid gap-6 lg:grid-cols-12 print:hidden">
-          <section className="min-w-0 lg:col-span-8 print:hidden">
-            <div className="space-y-6">
-              <InputsPanel />
-
-              <CostSummaryCard
-                inputs={deferredInputs}
-                summary={summary}
-                remainingBalance={remainingBalance}
+          {isMobileNavOpen ? (
+            <div
+              className="fixed inset-0 z-50 lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation"
+            >
+              <button
+                type="button"
+                className="absolute inset-0 bg-slate-950/50"
+                onClick={closeMobileNav}
+                aria-label="Close navigation"
               />
+
+              <div
+                className="absolute left-0 top-0 h-full w-72 max-w-[85vw] -translate-x-0 transform transition"
+                role="presentation"
+              >
+                <SideNav onNavigate={closeMobileNav} />
+              </div>
             </div>
-          </section>
+          ) : null}
 
-          <section className="min-w-0 lg:col-span-4">
-            <SidebarStats
-              inputs={deferredInputs}
-              summary={summary}
-              monthlyTaxesCosts={monthlyTaxesCosts}
-              totalMonthlyPayment={totalMonthlyPayment}
-            />
-          </section>
-
-          <section className="min-w-0 lg:col-span-12">
-            <ScheduleSection
-              schedule={schedule}
-              loanYearGroups={loanYearGroups}
-              monthlyTaxesCosts={monthlyTaxesCosts}
-            />
-          </section>
+          <div className="lg:pl-72">
+            <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+              <div className="min-w-0">
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <MortgageCalculatorPage onOpenNav={openMobileNav} />
+                    }
+                  />
+                  <Route
+                    path="/scenarios"
+                    element={
+                      <ScenarioComparisonPage onOpenNav={openMobileNav} />
+                    }
+                  />
+                  <Route
+                    path="/refinance"
+                    element={
+                      <RefinanceBreakEvenPage onOpenNav={openMobileNav} />
+                    }
+                  />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </HashRouter>
     </div>
   );
 }

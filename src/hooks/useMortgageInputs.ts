@@ -1,20 +1,8 @@
 import { useMemo } from 'react';
 
 import type { MortgageInputs } from '../lib/mortgage';
+import { parseMortgageInputs } from '../lib/parseMortgageInputs';
 import { useMortgageStore } from '../store/mortgageStore';
-
-const currentYear = new Date().getFullYear();
-
-function numberFromInput(raw: string): number {
-  const cleaned = raw.replace(/[^0-9.-]/g, '');
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function clampInt(value: number, min: number, max: number): number {
-  const v = Math.floor(value);
-  return Math.min(max, Math.max(min, v));
-}
 
 export function useMortgageInputs(): MortgageInputs {
   const homePriceRaw = useMortgageStore((s) => s.homePriceRaw);
@@ -43,53 +31,33 @@ export function useMortgageInputs(): MortgageInputs {
   const extraOneTimeYearRaw = useMortgageStore((s) => s.extraOneTimeYearRaw);
 
   return useMemo(
-    () => ({
-      homePrice: numberFromInput(homePriceRaw),
-      downPaymentType,
-      downPaymentValue: numberFromInput(downPaymentRaw),
-      loanTermYears: numberFromInput(loanTermYearsRaw),
-      interestRateAnnualPercent: numberFromInput(interestRateRaw),
+    () =>
+      parseMortgageInputs({
+        homePriceRaw,
+        downPaymentType,
+        downPaymentRaw,
+        loanTermYearsRaw,
+        interestRateRaw,
 
-      startMonthIndex0,
-      startYear: clampInt(
-        (() => {
-          const parsed = numberFromInput(startYearRaw);
-          return parsed > 0 ? parsed : currentYear;
-        })(),
-        1900,
-        3000,
-      ),
+        startMonthIndex0,
+        startYearRaw,
 
-      includeTaxesCosts,
-      propertyTaxAnnual: numberFromInput(propertyTaxAnnualRaw),
-      homeInsuranceAnnual: numberFromInput(homeInsuranceAnnualRaw),
-      pmiMonthly: numberFromInput(pmiMonthlyRaw),
-      hoaMonthly: numberFromInput(hoaMonthlyRaw),
-      otherCostsMonthly: numberFromInput(otherCostsMonthlyRaw),
+        includeTaxesCosts,
+        propertyTaxAnnualRaw,
+        homeInsuranceAnnualRaw,
+        pmiMonthlyRaw,
+        hoaMonthlyRaw,
+        otherCostsMonthlyRaw,
 
-      extraMonthly: numberFromInput(extraMonthlyRaw),
-      extraYearly: numberFromInput(extraYearlyRaw),
-      extraYearlyMonthIndex0,
-      extraYearlyStartYear: clampInt(
-        (() => {
-          const parsed = numberFromInput(extraYearlyStartYearRaw);
-          return parsed > 0 ? parsed : currentYear + 1;
-        })(),
-        1900,
-        3000,
-      ),
+        extraMonthlyRaw,
+        extraYearlyRaw,
+        extraYearlyMonthIndex0,
+        extraYearlyStartYearRaw,
 
-      extraOneTime: numberFromInput(extraOneTimeRaw),
-      extraOneTimeMonthIndex0,
-      extraOneTimeYear: clampInt(
-        (() => {
-          const parsed = numberFromInput(extraOneTimeYearRaw);
-          return parsed > 0 ? parsed : currentYear;
-        })(),
-        1900,
-        3000,
-      ),
-    }),
+        extraOneTimeRaw,
+        extraOneTimeMonthIndex0,
+        extraOneTimeYearRaw,
+      }),
     [
       downPaymentRaw,
       downPaymentType,

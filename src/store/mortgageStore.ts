@@ -7,11 +7,14 @@ import {
 } from 'zustand/middleware';
 
 import type { DownPaymentType } from '../lib/mortgage';
+import type { MortgageInputsRaw } from '../lib/mortgageInputsRaw';
 
 type Theme = 'light' | 'dark';
 
 export type MortgageFormState = {
   theme: Theme;
+
+  scenarios: Scenario[];
 
   homePriceRaw: string;
   downPaymentType: DownPaymentType;
@@ -39,6 +42,13 @@ export type MortgageFormState = {
   extraOneTimeYearRaw: string;
 
   scheduleJumpYear: number;
+};
+
+export type Scenario = {
+  id: string;
+  name: string;
+  createdAtIso: string;
+  inputs: MortgageInputsRaw;
 };
 
 export type MortgageFormActions = {
@@ -71,6 +81,11 @@ export type MortgageFormActions = {
   setExtraOneTimeYearRaw: (value: string) => void;
 
   setScheduleJumpYear: (value: number) => void;
+
+  saveScenario: (name: string) => void;
+  deleteScenario: (id: string) => void;
+  renameScenario: (id: string, name: string) => void;
+  applyScenario: (id: string) => void;
 
   resetToDefaults: () => void;
   clearPersisted: () => void;
@@ -117,6 +132,8 @@ export function getDefaultMortgageFormState(): MortgageFormState {
   return {
     theme: 'light',
 
+    scenarios: [],
+
     homePriceRaw: '',
     downPaymentType: 'percent',
     downPaymentRaw: '',
@@ -144,6 +161,76 @@ export function getDefaultMortgageFormState(): MortgageFormState {
 
     scheduleJumpYear: 1,
   };
+}
+
+function createId(): string {
+  // Prefer crypto.randomUUID when available.
+  try {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return (crypto as Crypto).randomUUID();
+    }
+  } catch {
+    // ignore
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function pickInputsRaw(state: MortgageFormState): MortgageInputsRaw {
+  return {
+    homePriceRaw: state.homePriceRaw,
+    downPaymentType: state.downPaymentType,
+    downPaymentRaw: state.downPaymentRaw,
+    loanTermYearsRaw: state.loanTermYearsRaw,
+    interestRateRaw: state.interestRateRaw,
+
+    startMonthIndex0: state.startMonthIndex0,
+    startYearRaw: state.startYearRaw,
+
+    includeTaxesCosts: state.includeTaxesCosts,
+    propertyTaxAnnualRaw: state.propertyTaxAnnualRaw,
+    homeInsuranceAnnualRaw: state.homeInsuranceAnnualRaw,
+    pmiMonthlyRaw: state.pmiMonthlyRaw,
+    hoaMonthlyRaw: state.hoaMonthlyRaw,
+    otherCostsMonthlyRaw: state.otherCostsMonthlyRaw,
+
+    extraMonthlyRaw: state.extraMonthlyRaw,
+    extraYearlyRaw: state.extraYearlyRaw,
+    extraYearlyMonthIndex0: state.extraYearlyMonthIndex0,
+    extraYearlyStartYearRaw: state.extraYearlyStartYearRaw,
+
+    extraOneTimeRaw: state.extraOneTimeRaw,
+    extraOneTimeMonthIndex0: state.extraOneTimeMonthIndex0,
+    extraOneTimeYearRaw: state.extraOneTimeYearRaw,
+  };
+}
+
+function applyInputsRaw(set: (partial: Partial<MortgageFormState>) => void, raw: MortgageInputsRaw) {
+  set({
+    homePriceRaw: raw.homePriceRaw,
+    downPaymentType: raw.downPaymentType,
+    downPaymentRaw: raw.downPaymentRaw,
+    loanTermYearsRaw: raw.loanTermYearsRaw,
+    interestRateRaw: raw.interestRateRaw,
+
+    startMonthIndex0: raw.startMonthIndex0,
+    startYearRaw: raw.startYearRaw,
+
+    includeTaxesCosts: raw.includeTaxesCosts,
+    propertyTaxAnnualRaw: raw.propertyTaxAnnualRaw,
+    homeInsuranceAnnualRaw: raw.homeInsuranceAnnualRaw,
+    pmiMonthlyRaw: raw.pmiMonthlyRaw,
+    hoaMonthlyRaw: raw.hoaMonthlyRaw,
+    otherCostsMonthlyRaw: raw.otherCostsMonthlyRaw,
+
+    extraMonthlyRaw: raw.extraMonthlyRaw,
+    extraYearlyRaw: raw.extraYearlyRaw,
+    extraYearlyMonthIndex0: raw.extraYearlyMonthIndex0,
+    extraYearlyStartYearRaw: raw.extraYearlyStartYearRaw,
+
+    extraOneTimeRaw: raw.extraOneTimeRaw,
+    extraOneTimeMonthIndex0: raw.extraOneTimeMonthIndex0,
+    extraOneTimeYearRaw: raw.extraOneTimeYearRaw,
+  });
 }
 
 function createDebouncedLocalStorage(delayMs: number): Storage {
@@ -303,6 +390,39 @@ export const useMortgageStore = create<MortgageStore>()(
 
       setScheduleJumpYear: (value) => set({ scheduleJumpYear: value }),
 
+      saveScenario: (name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        const state = get();
+        const scenario: Scenario = {
+          id: createId(),
+          name: trimmed,
+          createdAtIso: new Date().toISOString(),
+          inputs: pickInputsRaw(state),
+        };
+        set({ scenarios: [scenario, ...state.scenarios] });
+      },
+
+      deleteScenario: (id) => {
+        set({ scenarios: get().scenarios.filter((s) => s.id !== id) });
+      },
+
+      renameScenario: (id, name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        set({
+          scenarios: get().scenarios.map((s) =>
+            s.id === id ? { ...s, name: trimmed } : s,
+          ),
+        });
+      },
+
+      applyScenario: (id) => {
+        const scenario = get().scenarios.find((s) => s.id === id);
+        if (!scenario) return;
+        applyInputsRaw(set, scenario.inputs);
+      },
+
       resetToDefaults: () => {
         const defaults = getDefaultMortgageFormState();
         set({ ...defaults, theme: get().theme });
@@ -315,18 +435,39 @@ export const useMortgageStore = create<MortgageStore>()(
     {
       name: STORE_KEY,
       storage: persistedStorage,
-      version: 1,
+      version: 2,
       migrate: (persisted, version) => {
-        if (version >= 1) return persisted;
+        const persistedObj: Partial<MortgageFormState> =
+          persisted && typeof persisted === 'object'
+            ? (persisted as Partial<MortgageFormState>)
+            : {};
+
+        // v0: legacy migrate only
+        // v1: zero-strings-to-empty
+        // v2: add scenarios array
+        if (version >= 2) {
+          const merged: MortgageFormState = {
+            ...getDefaultMortgageFormState(),
+            ...persistedObj,
+          };
+          merged.scenarios = Array.isArray(persistedObj.scenarios)
+            ? (persistedObj.scenarios as Scenario[])
+            : [];
+          return merged;
+        }
 
         const merged: MortgageFormState = {
           ...getDefaultMortgageFormState(),
-          ...persisted,
+          ...persistedObj,
         };
-        return migrateZeroStringsToEmpty(merged);
+        const upgraded = migrateZeroStringsToEmpty(merged);
+        upgraded.scenarios = [];
+        return upgraded;
       },
       partialize: (state) => ({
         theme: state.theme,
+
+        scenarios: state.scenarios,
 
         homePriceRaw: state.homePriceRaw,
         downPaymentType: state.downPaymentType,
