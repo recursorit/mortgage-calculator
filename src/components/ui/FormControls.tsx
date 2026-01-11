@@ -69,10 +69,9 @@ export function Toggle(props: {
       aria-checked={props.checked}
       onClick={() => props.onChange(!props.checked)}
       className={
-        'flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left shadow-sm transition ' +
-        (props.checked
-          ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30'
-          : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800')
+        'flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition ' +
+        'hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 ' +
+        'dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:focus:ring-slate-800'
       }
     >
       <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -80,14 +79,14 @@ export function Toggle(props: {
       </span>
       <span
         className={
-          'relative inline-flex h-6 w-11 flex-none items-center rounded-full transition ' +
-          (props.checked ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600')
+          'relative inline-flex h-6 w-11 flex-none items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ' +
+          (props.checked ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-600')
         }
       >
         <span
           className={
-            'inline-block h-5 w-5 rounded-full bg-white shadow transition ' +
-            (props.checked ? 'translate-x-5' : 'translate-x-1')
+            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ' +
+            (props.checked ? 'translate-x-5' : 'translate-x-0')
           }
         />
       </span>

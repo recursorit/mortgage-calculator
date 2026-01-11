@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 
+import { useAuth } from '../auth/useAuth';
 import { useMortgageStore } from '../store/mortgageStore';
 
 export function HeaderBar(props: {
   onReset?: () => void;
   onOpenNav?: () => void;
 }) {
+  const auth = useAuth();
   const theme = useMortgageStore((s) => s.theme);
   const toggleTheme = useMortgageStore((s) => s.toggleTheme);
 
@@ -57,6 +59,63 @@ export function HeaderBar(props: {
         </div>
 
         <div className="flex w-full flex-wrap items-center gap-2 print:hidden sm:w-auto sm:justify-end">
+          {auth.isEnabled ? (
+            auth.user ? (
+              <>
+                <div className="hidden max-w-[240px] truncate rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:block">
+                  {auth.user.email ?? 'Signed in'}
+                </div>
+
+                {auth.scenarioSyncStatus !== 'idle' ? (
+                  <div
+                    className={
+                      'inline-flex items-center justify-center rounded-2xl border px-3 py-2 text-sm font-bold shadow-sm ' +
+                      (auth.scenarioSyncStatus === 'saving'
+                        ? 'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100'
+                        : auth.scenarioSyncStatus === 'error'
+                          ? 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100'
+                          : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100')
+                    }
+                    title={(() => {
+                      if (auth.scenarioSyncStatus === 'error') {
+                        return auth.scenarioSyncError ?? 'Sync error';
+                      }
+                      if (
+                        auth.scenarioSyncStatus === 'synced' &&
+                        auth.scenarioLastSyncedAtMs
+                      ) {
+                        return `Last synced: ${new Date(auth.scenarioLastSyncedAtMs).toLocaleString()}`;
+                      }
+                      return undefined;
+                    })()}
+                  >
+                    {auth.scenarioSyncStatus === 'saving'
+                      ? 'Saving…'
+                      : auth.scenarioSyncStatus === 'error'
+                        ? 'Sync error'
+                        : 'Synced'}
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => void auth.signOut()}
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void auth.signInWithGoogle()}
+                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+              >
+                Sign in with Google
+              </button>
+            )
+          ) : null}
+
           <button
             type="button"
             onClick={toggleTheme}

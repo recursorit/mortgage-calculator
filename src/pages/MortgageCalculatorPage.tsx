@@ -74,8 +74,6 @@ export function MortgageCalculatorPage(props: { onOpenNav?: () => void }) {
             <div className="space-y-6">
               <InputsPanel />
 
-              <SaveScenarioCard />
-
               <CostSummaryCard
                 inputs={deferredInputs}
                 summary={summary}
@@ -85,12 +83,16 @@ export function MortgageCalculatorPage(props: { onOpenNav?: () => void }) {
           </section>
 
           <section className="min-w-0 lg:col-span-4">
-            <SidebarStats
-              inputs={deferredInputs}
-              summary={summary}
-              monthlyTaxesCosts={monthlyTaxesCosts}
-              totalMonthlyPayment={totalMonthlyPayment}
-            />
+            <div className="space-y-6">
+              <SidebarStats
+                inputs={deferredInputs}
+                summary={summary}
+                monthlyTaxesCosts={monthlyTaxesCosts}
+                totalMonthlyPayment={totalMonthlyPayment}
+              />
+
+              <SaveScenarioCard />
+            </div>
           </section>
 
           <section className="min-w-0 lg:col-span-12">

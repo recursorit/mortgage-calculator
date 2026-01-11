@@ -36,6 +36,10 @@
     - Persist key: `mortgageCalculator:store:v1`
     - Debounced localStorage writes (~250ms) to keep typing responsive.
     - Migrates legacy keys: `mortgageCalculator:form:v1` and `mortgageCalculator:theme:v1`.
+    - Scenarios
+      - Scenario names are treated as unique (case-insensitive).
+      - `saveScenario(name)` upserts by name (updates existing or creates new).
+      - Tracks `activeScenarioId` and `scenarioDraftName` for smoother UX.
 
 - Parsing
   - `src/hooks/useMortgageInputs.ts` – converts raw strings → numbers (also clamps years/months).
@@ -62,6 +66,22 @@
 - Use `useDeferredValue` for calculations to prevent UI jank while typing.
 - Use `content-visibility: auto` for large schedule sections to reduce render cost.
 - Keep PDF library code out of the initial bundle via dynamic `import()`.
+
+## Firebase (optional): Auth + scenario sync
+
+If configured, the app supports Google sign-in and syncing scenarios to Firestore.
+
+- Firebase setup helpers
+  - `src/lib/firebase.ts` – initializes Firebase from `PUBLIC_FIREBASE_*` env vars.
+- Auth + sync
+  - `src/auth/AuthProvider.tsx` – listens to auth state, loads scenarios on login, and debounced-saves scenarios on change.
+  - `src/auth/authContext.ts` + `src/auth/useAuth.ts` – context + hook.
+- Storage model
+  - Firestore document: `users/{uid}`
+  - Fields: `scenarios: Scenario[]`, `updatedAt: serverTimestamp()`
+- UX feedback
+  - Header shows a small pill after the first write: `Saving…` / `Synced` / `Sync error`.
+  - On error, the pill tooltip shows the Firebase error string.
 
 ## Printing policy
 

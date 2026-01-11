@@ -31,7 +31,7 @@ Sets the first payment month in the schedule.
 
 ### Include taxes & costs (optional)
 
-When enabled, the calculator includes monthly estimates for:
+By default this is **off**. When enabled, the calculator includes monthly estimates for:
 
 - Property tax (annual)
 - Home insurance (annual)
@@ -40,6 +40,8 @@ When enabled, the calculator includes monthly estimates for:
 - Other costs (monthly)
 
 Note: These items do not change the loan amortization (principal/interest), but they do affect your **total monthly payment** and **total out-of-pocket**.
+
+The taxes/costs inputs are hidden until you enable the toggle.
 
 ### Extra payments
 
@@ -98,8 +100,27 @@ Note: Printing uses the generated PDF (not an HTML print view).
 ## Tips
 
 - If you want to compare scenarios, adjust extra payments and watch “Interest saved” and “Payoff” change.
+- Use **Save scenario** to save your current inputs and quickly apply them later.
 - Use “Reset” to return to defaults.
 - Your inputs are saved locally in your browser (localStorage) so they persist when you refresh.
+
+## Saved scenarios
+
+### Save / update
+
+- Enter a scenario name and click **Save scenario**.
+- Scenario names are treated as **unique**:
+  - Saving with the same name updates that scenario’s saved inputs.
+  - Saving with a different name creates a new scenario.
+
+### Apply
+
+- On the calculator page, open **Saved scenarios** and choose a scenario to apply it immediately.
+- After applying, the scenario name field updates to that scenario’s name, so you can tweak inputs and re-save without creating duplicates.
+
+### Sync across devices (optional)
+
+If Google sign-in is enabled, saved scenarios can be synced to the cloud.
 
 ## Disclaimer
 

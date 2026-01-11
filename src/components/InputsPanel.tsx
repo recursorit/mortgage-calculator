@@ -183,66 +183,57 @@ export function InputsPanel() {
           label="Include taxes & costs"
         />
 
-        <div
-          className={
-            'grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 transition dark:border-slate-800 dark:bg-slate-950/40 ' +
-            (includeTaxesCosts ? '' : 'opacity-50')
-          }
-          aria-disabled={!includeTaxesCosts}
-        >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <LabeledField label="Property tax" hint="per year">
-              <Input
-                inputMode="decimal"
-                value={propertyTaxAnnualRaw}
-                onChange={(e) => setPropertyTaxAnnualRaw(e.target.value)}
-                aria-label="Property taxes per year"
-                placeholder="0"
-                disabled={!includeTaxesCosts}
-              />
-            </LabeledField>
-            <LabeledField label="Home insurance" hint="per year">
-              <Input
-                inputMode="decimal"
-                value={homeInsuranceAnnualRaw}
-                onChange={(e) => setHomeInsuranceAnnualRaw(e.target.value)}
-                aria-label="Home insurance per year"
-                placeholder="0"
-                disabled={!includeTaxesCosts}
-              />
-            </LabeledField>
-            <LabeledField label="PMI" hint="per month">
-              <Input
-                inputMode="decimal"
-                value={pmiMonthlyRaw}
-                onChange={(e) => setPmiMonthlyRaw(e.target.value)}
-                aria-label="PMI per month"
-                placeholder="0"
-                disabled={!includeTaxesCosts}
-              />
-            </LabeledField>
-            <LabeledField label="HOA" hint="per month">
-              <Input
-                inputMode="decimal"
-                value={hoaMonthlyRaw}
-                onChange={(e) => setHoaMonthlyRaw(e.target.value)}
-                aria-label="HOA per month"
-                placeholder="0"
-                disabled={!includeTaxesCosts}
-              />
-            </LabeledField>
-            <LabeledField label="Other costs" hint="per month">
-              <Input
-                inputMode="decimal"
-                value={otherCostsMonthlyRaw}
-                onChange={(e) => setOtherCostsMonthlyRaw(e.target.value)}
-                aria-label="Other costs per month"
-                placeholder="0"
-                disabled={!includeTaxesCosts}
-              />
-            </LabeledField>
+        {includeTaxesCosts ? (
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <LabeledField label="Property tax" hint="per year">
+                <Input
+                  inputMode="decimal"
+                  value={propertyTaxAnnualRaw}
+                  onChange={(e) => setPropertyTaxAnnualRaw(e.target.value)}
+                  aria-label="Property taxes per year"
+                  placeholder="0"
+                />
+              </LabeledField>
+              <LabeledField label="Home insurance" hint="per year">
+                <Input
+                  inputMode="decimal"
+                  value={homeInsuranceAnnualRaw}
+                  onChange={(e) => setHomeInsuranceAnnualRaw(e.target.value)}
+                  aria-label="Home insurance per year"
+                  placeholder="0"
+                />
+              </LabeledField>
+              <LabeledField label="PMI" hint="per month">
+                <Input
+                  inputMode="decimal"
+                  value={pmiMonthlyRaw}
+                  onChange={(e) => setPmiMonthlyRaw(e.target.value)}
+                  aria-label="PMI per month"
+                  placeholder="0"
+                />
+              </LabeledField>
+              <LabeledField label="HOA" hint="per month">
+                <Input
+                  inputMode="decimal"
+                  value={hoaMonthlyRaw}
+                  onChange={(e) => setHoaMonthlyRaw(e.target.value)}
+                  aria-label="HOA per month"
+                  placeholder="0"
+                />
+              </LabeledField>
+              <LabeledField label="Other costs" hint="per month">
+                <Input
+                  inputMode="decimal"
+                  value={otherCostsMonthlyRaw}
+                  onChange={(e) => setOtherCostsMonthlyRaw(e.target.value)}
+                  aria-label="Other costs per month"
+                  placeholder="0"
+                />
+              </LabeledField>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="space-y-3">

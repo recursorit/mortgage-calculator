@@ -15,6 +15,8 @@ export type MortgageFormState = {
   theme: Theme;
 
   scenarios: Scenario[];
+  activeScenarioId: string | null;
+  scenarioDraftName: string;
 
   homePriceRaw: string;
   downPaymentType: DownPaymentType;
@@ -83,9 +85,11 @@ export type MortgageFormActions = {
   setScheduleJumpYear: (value: number) => void;
 
   saveScenario: (name: string) => void;
+  setScenarioDraftName: (name: string) => void;
   deleteScenario: (id: string) => void;
   renameScenario: (id: string, name: string) => void;
   applyScenario: (id: string) => void;
+  setScenarios: (scenarios: Scenario[]) => void;
 
   resetToDefaults: () => void;
   clearPersisted: () => void;
@@ -133,6 +137,8 @@ export function getDefaultMortgageFormState(): MortgageFormState {
     theme: 'light',
 
     scenarios: [],
+    activeScenarioId: null,
+    scenarioDraftName: '',
 
     homePriceRaw: '',
     downPaymentType: 'percent',
@@ -173,6 +179,10 @@ function createId(): string {
     // ignore
   }
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeScenarioName(name: string): string {
+  return name.trim().toLowerCase();
 }
 
 function pickInputsRaw(state: MortgageFormState): MortgageInputsRaw {
@@ -394,22 +404,64 @@ export const useMortgageStore = create<MortgageStore>()(
         const trimmed = name.trim();
         if (!trimmed) return;
         const state = get();
+        const normalized = normalizeScenarioName(trimmed);
+        const existing = state.scenarios.find(
+          (s) => normalizeScenarioName(s.name) === normalized,
+        );
+
+        if (existing) {
+          const updated: Scenario = {
+            ...existing,
+            name: trimmed,
+            inputs: pickInputsRaw(state),
+          };
+          set({
+            scenarios: [
+              updated,
+              ...state.scenarios.filter((s) => s.id !== existing.id),
+            ],
+            activeScenarioId: existing.id,
+            scenarioDraftName: trimmed,
+          });
+          return;
+        }
+
         const scenario: Scenario = {
           id: createId(),
           name: trimmed,
           createdAtIso: new Date().toISOString(),
           inputs: pickInputsRaw(state),
         };
-        set({ scenarios: [scenario, ...state.scenarios] });
+        set({
+          scenarios: [scenario, ...state.scenarios],
+          activeScenarioId: scenario.id,
+          scenarioDraftName: trimmed,
+        });
+      },
+
+      setScenarioDraftName: (name) => {
+        set({ scenarioDraftName: name });
       },
 
       deleteScenario: (id) => {
-        set({ scenarios: get().scenarios.filter((s) => s.id !== id) });
+        const state = get();
+        const isActive = state.activeScenarioId === id;
+        set({
+          scenarios: state.scenarios.filter((s) => s.id !== id),
+          activeScenarioId: isActive ? null : state.activeScenarioId,
+          scenarioDraftName: isActive ? '' : state.scenarioDraftName,
+        });
       },
 
       renameScenario: (id, name) => {
         const trimmed = name.trim();
         if (!trimmed) return;
+        const nextNorm = normalizeScenarioName(trimmed);
+        const state = get();
+        const collision = state.scenarios.some(
+          (s) => s.id !== id && normalizeScenarioName(s.name) === nextNorm,
+        );
+        if (collision) return;
         set({
           scenarios: get().scenarios.map((s) =>
             s.id === id ? { ...s, name: trimmed } : s,
@@ -421,6 +473,11 @@ export const useMortgageStore = create<MortgageStore>()(
         const scenario = get().scenarios.find((s) => s.id === id);
         if (!scenario) return;
         applyInputsRaw(set, scenario.inputs);
+        set({ activeScenarioId: id, scenarioDraftName: scenario.name });
+      },
+
+      setScenarios: (scenarios) => {
+        set({ scenarios: Array.isArray(scenarios) ? scenarios : [] });
       },
 
       resetToDefaults: () => {
@@ -468,6 +525,8 @@ export const useMortgageStore = create<MortgageStore>()(
         theme: state.theme,
 
         scenarios: state.scenarios,
+        activeScenarioId: state.activeScenarioId,
+        scenarioDraftName: state.scenarioDraftName,
 
         homePriceRaw: state.homePriceRaw,
         downPaymentType: state.downPaymentType,
