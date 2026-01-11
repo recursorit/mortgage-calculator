@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { useAuth } from '../auth/useAuth';
+import { debugAuthLog } from '../lib/debug';
 import { useMortgageStore } from '../store/mortgageStore';
 
 export function HeaderBar(props: {
@@ -15,6 +16,14 @@ export function HeaderBar(props: {
     // Ensure theme is applied on first mount (e.g. if persisted)
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    debugAuthLog('HeaderBar auth', {
+      isEnabled: auth.isEnabled,
+      isAuthReady: auth.isAuthReady,
+      hasUser: Boolean(auth.user),
+    });
+  }, [auth.isAuthReady, auth.isEnabled, auth.user]);
 
   return (
     <header className="border-b border-slate-200/70 bg-white/70 backdrop-blur print:border-0 print:bg-white dark:border-slate-800/70 dark:bg-slate-950/60">

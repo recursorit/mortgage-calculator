@@ -25,6 +25,7 @@ import {
   getFirebaseDb,
   isFirebaseConfigured,
 } from '../lib/firebase';
+import { debugAuthLog } from '../lib/debug';
 import type { Scenario } from '../store/mortgageStore';
 import { useMortgageStore } from '../store/mortgageStore';
 
@@ -65,6 +66,28 @@ export function AuthProvider(props: { children: ReactNode }) {
   const isEnabled = isFirebaseConfigured();
   const [user, setUser] = useState<import('firebase/auth').User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(() => !isEnabled);
+
+  useEffect(() => {
+    debugAuthLog('AuthProvider init', {
+      isEnabled,
+      href:
+        typeof window !== 'undefined' ? window.location.href : '(no window)',
+      env: {
+        PUBLIC_FIREBASE_API_KEY: Boolean(
+          import.meta.env.PUBLIC_FIREBASE_API_KEY,
+        ),
+        PUBLIC_FIREBASE_AUTH_DOMAIN:
+          import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+        PUBLIC_FIREBASE_PROJECT_ID:
+          import.meta.env.PUBLIC_FIREBASE_PROJECT_ID ?? '',
+        PUBLIC_FIREBASE_APP_ID: import.meta.env.PUBLIC_FIREBASE_APP_ID ?? '',
+        PUBLIC_FIREBASE_STORAGE_BUCKET:
+          import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+        PUBLIC_FIREBASE_MESSAGING_SENDER_ID:
+          import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+      },
+    });
+  }, [isEnabled]);
 
   const [scenarioSyncStatus, setScenarioSyncStatus] =
     useState<ScenarioSyncStatus>('idle');
