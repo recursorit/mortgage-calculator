@@ -19,8 +19,12 @@ const currentYear = new Date().getFullYear();
 
 type HelpTopic = 'monthly' | 'yearly';
 type HelpTab = 'explanation' | 'example';
+type InputsHelpTab = 'basics' | 'arm';
 
 export function InputsPanel() {
+  const [inputsHelpOpen, setInputsHelpOpen] = useState(false);
+  const [inputsHelpTab, setInputsHelpTab] = useState<InputsHelpTab>('basics');
+
   const [helpOpen, setHelpOpen] = useState<HelpTopic | null>(null);
   const [helpTab, setHelpTab] = useState<HelpTab>('explanation');
 
@@ -38,6 +42,19 @@ export function InputsPanel() {
 
   const interestRateRaw = useMortgageStore((s) => s.interestRateRaw);
   const setInterestRateRaw = useMortgageStore((s) => s.setInterestRateRaw);
+
+  const interestType = useMortgageStore((s) => s.interestType);
+  const setInterestType = useMortgageStore((s) => s.setInterestType);
+
+  const armPreset = useMortgageStore((s) => s.armPreset);
+  const setArmPreset = useMortgageStore((s) => s.setArmPreset);
+  const armRateChanges = useMortgageStore((s) => s.armRateChanges);
+  const addArmRateChange = useMortgageStore((s) => s.addArmRateChange);
+  const updateArmRateChange = useMortgageStore((s) => s.updateArmRateChange);
+  const removeArmRateChange = useMortgageStore((s) => s.removeArmRateChange);
+  const armRateValidationMessage = useMortgageStore(
+    (s) => s.armRateValidationMessage,
+  );
 
   const startMonthIndex0 = useMortgageStore((s) => s.startMonthIndex0);
   const setStartMonthIndex0 = useMortgageStore((s) => s.setStartMonthIndex0);
@@ -137,18 +154,282 @@ export function InputsPanel() {
 
   const closeHelp = () => setHelpOpen(null);
 
+  const openInputsHelp = () => {
+    setInputsHelpOpen(true);
+    setInputsHelpTab(interestType === 'arm' ? 'arm' : 'basics');
+  };
+
+  const closeInputsHelp = () => setInputsHelpOpen(false);
+
   const tabButtonClassName = (active: boolean) =>
     'inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-2 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 ' +
     (active
       ? 'border-sky-200 bg-sky-50 text-slate-900 focus:ring-sky-100 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-slate-50 dark:focus:ring-sky-900/40'
       : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800');
 
+  const armRateChangeMetaById = useMemo(() => {
+    const parseYear = (value: string): number | null => {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const parsed = Number(trimmed);
+      if (!Number.isFinite(parsed)) return null;
+      return Math.trunc(parsed);
+    };
+
+    const startYear = parseYear(startYearRaw);
+    const startSerial =
+      startYear === null ? null : startYear * 12 + startMonthIndex0;
+
+    const base = armRateChanges.map((c) => {
+      const effectiveYear = parseYear(c.effectiveYearRaw);
+      const effectiveMonthIndex0 = Number.isFinite(c.effectiveMonthIndex0)
+        ? Math.min(11, Math.max(0, Math.trunc(c.effectiveMonthIndex0)))
+        : 0;
+
+      const serial =
+        effectiveYear === null
+          ? null
+          : effectiveYear * 12 + effectiveMonthIndex0;
+
+      return {
+        id: c.id,
+        effectiveYear,
+        effectiveMonthIndex0,
+        serial,
+      };
+    });
+
+    const serialCounts = new Map<number, number>();
+    for (const row of base) {
+      if (row.serial === null) continue;
+      serialCounts.set(row.serial, (serialCounts.get(row.serial) ?? 0) + 1);
+    }
+
+    const sortedValid = base
+      .filter((r) => r.serial !== null)
+      .map((r) => ({ ...r, serial: r.serial as number }))
+      .sort((a, b) => a.serial - b.serial);
+
+    const orderIndexById = new Map<string, number>();
+    const deltaMonthsById = new Map<string, number | null>();
+    for (let i = 0; i < sortedValid.length; i += 1) {
+      const row = sortedValid[i];
+      orderIndexById.set(row.id, i + 1);
+      const prev = i > 0 ? sortedValid[i - 1] : null;
+      deltaMonthsById.set(row.id, prev ? row.serial - prev.serial : null);
+    }
+
+    const metaById = new Map<
+      string,
+      {
+        effectiveLabel: string;
+        loanMonthLabel: string;
+        orderLabel: string;
+        deltaLabel: string;
+        warning: string | null;
+        hasWarning: boolean;
+      }
+    >();
+
+    for (const row of base) {
+      const effectiveLabel =
+        row.effectiveYear === null
+          ? 'Effective: —'
+          : `Effective: ${monthShortName(row.effectiveMonthIndex0)} ${row.effectiveYear}`;
+
+      const monthsFromStart =
+        startSerial === null || row.serial === null
+          ? null
+          : row.serial - startSerial;
+
+      const loanMonthLabel =
+        monthsFromStart === null
+          ? 'Loan month: —'
+          : monthsFromStart < 0
+            ? 'Loan month: (before start)'
+            : `Loan month: ${monthsFromStart + 1}`;
+
+      const order = orderIndexById.get(row.id) ?? null;
+      const orderLabel = order === null ? 'Order: —' : `Order: ${order}`;
+
+      const delta = deltaMonthsById.get(row.id) ?? null;
+      const deltaLabel =
+        delta === null ? 'Δ: —' : delta === 0 ? 'Δ: 0 mo' : `Δ: +${delta} mo`;
+
+      let warning: string | null = null;
+      if (row.effectiveYear === null) {
+        warning = 'Enter a valid effective year.';
+      } else if (
+        row.serial !== null &&
+        startSerial !== null &&
+        row.serial < startSerial
+      ) {
+        warning = 'This change is before the loan start date.';
+      } else if (
+        row.serial !== null &&
+        (serialCounts.get(row.serial) ?? 0) > 1
+      ) {
+        warning = 'Duplicate effective date. Each change month must be unique.';
+      }
+
+      metaById.set(row.id, {
+        effectiveLabel,
+        loanMonthLabel,
+        orderLabel,
+        deltaLabel,
+        warning,
+        hasWarning: Boolean(warning),
+      });
+    }
+
+    return metaById;
+  }, [armRateChanges, startMonthIndex0, startYearRaw]);
+
   return (
     <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
       <SectionHeader
         title="Inputs"
         description="Adjust values to see monthly payment and payoff details."
+        right={
+          <button
+            type="button"
+            className={helpButtonClassName}
+            onClick={openInputsHelp}
+            aria-label="How inputs work"
+            title="How inputs work"
+          >
+            <IconHelpCircle size={18} aria-hidden="true" />
+          </button>
+        }
       />
+
+      <InfoModal
+        open={inputsHelpOpen}
+        title="How Inputs work"
+        description="What each input affects, plus how ARM rate changes are applied."
+        onClose={closeInputsHelp}
+      >
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={tabButtonClassName(inputsHelpTab === 'basics')}
+            onClick={() => setInputsHelpTab('basics')}
+          >
+            <IconInfoCircle size={16} aria-hidden="true" />
+            Basics
+          </button>
+          <button
+            type="button"
+            className={tabButtonClassName(inputsHelpTab === 'arm')}
+            onClick={() => setInputsHelpTab('arm')}
+          >
+            <IconListDetails size={16} aria-hidden="true" />
+            ARM
+          </button>
+        </div>
+
+        {inputsHelpTab === 'basics' ? (
+          <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                Loan amount
+              </div>
+              <div className="mt-1">
+                <span className="font-semibold">Home price</span> minus{' '}
+                <span className="font-semibold">down payment</span> determines
+                your starting loan balance.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                Monthly payment (P&I)
+              </div>
+              <div className="mt-1">
+                The calculator computes your scheduled monthly principal &amp;
+                interest payment from the{' '}
+                <span className="font-semibold">term</span> and{' '}
+                <span className="font-semibold">interest rate</span>.
+              </div>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>
+                  If the rate is 0%, payments are straight-line principal.
+                </li>
+                <li>
+                  Scheduled P&amp;I is never more than the amount needed to
+                  close.
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                Start month/year
+              </div>
+              <div className="mt-1">
+                This sets the first payment in the schedule and is also the
+                reference point for features that use dates (like ARM changes
+                and extra payment ranges).
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                Taxes &amp; costs toggle
+              </div>
+              <div className="mt-1">
+                Taxes/costs are added to your out-of-pocket totals, but they do
+                not change the loan balance payoff math.
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/40">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                What ARM means here
+              </div>
+              <div className="mt-1">
+                ARM support is currently{' '}
+                <span className="font-semibold">manual</span>: you enter the
+                future reset rates you want to model.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                How rate changes apply
+              </div>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>
+                  A change is effective at the{' '}
+                  <span className="font-semibold">start of that month</span>.
+                </li>
+                <li>
+                  On each change month, the scheduled P&amp;I payment is{' '}
+                  <span className="font-semibold">recast</span> based on the
+                  remaining balance and remaining term.
+                </li>
+                <li>
+                  If the ARM change list shows a validation warning, the
+                  calculator ignores the change list and uses the initial rate
+                  only.
+                </li>
+              </ul>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="font-extrabold text-slate-900 dark:text-slate-50">
+                Presets
+              </div>
+              <div className="mt-1">
+                Presets help you seed the first reset date (you still enter the
+                actual reset rate). Use “Add change” to add more resets.
+              </div>
+            </div>
+          </div>
+        )}
+      </InfoModal>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <LabeledField label="Home price">
@@ -194,12 +475,28 @@ export function InputsPanel() {
           </div>
         </LabeledField>
 
-        <LabeledField label="Interest rate" hint="APR %">
+        <LabeledField label="Interest type">
+          <Select
+            value={interestType}
+            onChange={(e) => setInterestType(e.target.value as 'fixed' | 'arm')}
+            aria-label="Interest type"
+          >
+            <option value="fixed">Fixed</option>
+            <option value="arm">ARM</option>
+          </Select>
+        </LabeledField>
+
+        <LabeledField
+          label={interestType === 'arm' ? 'Initial rate' : 'Interest rate'}
+          hint="APR %"
+        >
           <Input
             inputMode="decimal"
             value={interestRateRaw}
             onChange={(e) => setInterestRateRaw(e.target.value)}
-            aria-label="Interest rate"
+            aria-label={
+              interestType === 'arm' ? 'Initial interest rate' : 'Interest rate'
+            }
             placeholder="5.875"
           />
         </LabeledField>
@@ -228,6 +525,178 @@ export function InputsPanel() {
           />
         </LabeledField>
       </div>
+
+      {interestType === 'arm' ? (
+        <div className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-[14rem]">
+              <div className="text-sm font-black text-slate-900 dark:text-slate-100">
+                ARM rate changes
+              </div>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                Enter your expected future reset rates. Payment is recast on
+                each change month.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className={actionButtonClassName}
+              onClick={addArmRateChange}
+            >
+              <IconPlus className="h-4 w-4" />
+              Add change
+            </button>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <LabeledField label="Preset">
+              <Select
+                value={armPreset}
+                onChange={(e) =>
+                  setArmPreset(
+                    e.target.value as '5/1' | '7/6' | '5/6' | 'custom',
+                  )
+                }
+                aria-label="ARM preset"
+              >
+                <option value="5/1">5/1</option>
+                <option value="7/6">7/6</option>
+                <option value="5/6">5/6</option>
+                <option value="custom">Custom</option>
+              </Select>
+            </LabeledField>
+          </div>
+
+          {armRateValidationMessage ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+              {armRateValidationMessage}
+            </div>
+          ) : null}
+
+          {armRateChanges.length ? (
+            <div className="space-y-3">
+              {armRateChanges.map((c, idx) =>
+                (() => {
+                  const meta = armRateChangeMetaById.get(c.id);
+                  const cardClassName =
+                    'grid items-end gap-3 rounded-3xl border p-3 ' +
+                    (meta?.hasWarning
+                      ? 'border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30'
+                      : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900');
+
+                  const pillClassName =
+                    'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ' +
+                    (meta?.hasWarning
+                      ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200');
+
+                  return (
+                    <div key={c.id} className={cardClassName}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-black text-slate-900 dark:text-slate-100">
+                            Change {idx + 1}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className={pillClassName}>
+                              {meta?.effectiveLabel ?? 'Effective: —'}
+                            </span>
+                            <span className={pillClassName}>
+                              {meta?.loanMonthLabel ?? 'Loan month: —'}
+                            </span>
+                            <span className={pillClassName}>
+                              {meta?.orderLabel ?? 'Order: —'}
+                            </span>
+                            <span className={pillClassName}>
+                              {meta?.deltaLabel ?? 'Δ: —'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={dangerIconButtonClassName}
+                          onClick={() => removeArmRateChange(c.id)}
+                          aria-label="Remove rate change"
+                          title="Remove"
+                        >
+                          <IconTrash className="h-5 w-5" />
+                        </button>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <LabeledField
+                          label={idx === 0 ? 'Effective month' : 'Month'}
+                        >
+                          <Select
+                            value={c.effectiveMonthIndex0}
+                            onChange={(e) =>
+                              updateArmRateChange(c.id, {
+                                effectiveMonthIndex0: Number(e.target.value),
+                              })
+                            }
+                            aria-label="ARM change month"
+                          >
+                            {Array.from({ length: 12 }).map((_, i) => (
+                              <option key={i} value={i}>
+                                {monthShortName(i)}
+                              </option>
+                            ))}
+                          </Select>
+                        </LabeledField>
+
+                        <LabeledField
+                          label={idx === 0 ? 'Effective year' : 'Year'}
+                        >
+                          <Input
+                            inputMode="numeric"
+                            value={c.effectiveYearRaw}
+                            onChange={(e) =>
+                              updateArmRateChange(c.id, {
+                                effectiveYearRaw: e.target.value,
+                              })
+                            }
+                            aria-label="ARM change year"
+                            placeholder={startYearRaw || String(currentYear)}
+                          />
+                        </LabeledField>
+
+                        <LabeledField
+                          label={idx === 0 ? 'New rate' : 'Rate'}
+                          hint="APR %"
+                        >
+                          <Input
+                            inputMode="decimal"
+                            value={c.rateAnnualPercentRaw}
+                            onChange={(e) =>
+                              updateArmRateChange(c.id, {
+                                rateAnnualPercentRaw: e.target.value,
+                              })
+                            }
+                            aria-label="ARM new rate"
+                            placeholder="7.25"
+                          />
+                        </LabeledField>
+                      </div>
+
+                      {meta?.warning ? (
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200">
+                          {meta.warning}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })(),
+              )}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-700 dark:text-slate-200">
+              No rate changes yet. Add one for the first reset.
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         <Toggle

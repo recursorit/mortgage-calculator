@@ -34,7 +34,7 @@ export function HeaderBar(props: {
   }, [auth.isAuthReady, auth.isEnabled, auth.user]);
 
   return (
-    <header className="border-b border-slate-200/70 bg-white/70 backdrop-blur print:border-0 print:bg-white dark:border-slate-800/70 dark:bg-slate-950/60">
+    <header className="border-b border-[color:var(--mc-line)] bg-transparent backdrop-blur print:border-0 print:bg-white">
       <div className="flex w-full flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <div className="inline-flex items-center gap-2">

@@ -2,6 +2,14 @@ import { addMonths } from './format';
 
 export type DownPaymentType = 'percent' | 'amount';
 
+export type InterestType = 'fixed' | 'arm';
+
+export type ArmRateChange = {
+  // Absolute month index: (year * 12 + monthIndex0)
+  effectiveIndex: number;
+  annualRatePercent: number;
+};
+
 export type ExtraMonthlyRange = {
   amount: number;
   startIndex: number; // inclusive, (year * 12 + monthIndex0)
@@ -22,6 +30,10 @@ export interface MortgageInputs {
 
   loanTermYears: number;
   interestRateAnnualPercent: number;
+
+  interestType: InterestType;
+  armRateChanges: ArmRateChange[];
+  armRateChangesValid: boolean;
 
   startMonthIndex0: number; // 0-11
   startYear: number;
@@ -84,6 +96,10 @@ export interface AmortizationRow {
   index: number; // 1-based
   monthIndex0: number;
   year: number;
+
+  annualRatePercent: number;
+  scheduledMonthlyPI: number;
+  isRateChangeMonth: boolean;
 
   paymentPI: number;
   interest: number;
@@ -196,6 +212,10 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
   const scheduledMonthlyPI = monthlyPaymentPI(loanAmount, annualRatePercent, termMonths);
   const monthlyRate = annualRatePercent / 100 / 12;
 
+  const interestType: InterestType = inputs.interestType === 'arm' ? 'arm' : 'fixed';
+  const armRateChanges: ArmRateChange[] =
+    interestType === 'arm' && inputs.armRateChangesValid ? inputs.armRateChanges : [];
+
   const monthlyTaxesCosts =
     Math.max(0, safeNumber(inputs.propertyTaxAnnual)) / 12 +
     Math.max(0, safeNumber(inputs.homeInsuranceAnnual)) / 12 +
@@ -211,6 +231,8 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
     loanAmount,
     termMonths,
     annualRatePercent,
+    interestType,
+    armRateChanges,
     startMonthIndex0: clamp(inputs.startMonthIndex0, 0, 11),
     startYear: Math.max(0, Math.floor(safeNumber(inputs.startYear))),
     scheduledMonthlyPI,
@@ -231,6 +253,8 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
     loanAmount,
     termMonths,
     annualRatePercent,
+    interestType,
+    armRateChanges,
     startMonthIndex0: clamp(inputs.startMonthIndex0, 0, 11),
     startYear: Math.max(0, Math.floor(safeNumber(inputs.startYear))),
     scheduledMonthlyPI,
@@ -297,6 +321,8 @@ function buildSchedule(args: {
   loanAmount: number;
   termMonths: number;
   annualRatePercent: number;
+  interestType: InterestType;
+  armRateChanges: ArmRateChange[];
   startMonthIndex0: number;
   startYear: number;
   scheduledMonthlyPI: number;
@@ -314,7 +340,13 @@ function buildSchedule(args: {
 }): AmortizationRow[] {
   const loanAmount = Math.max(0, safeNumber(args.loanAmount));
   const termMonths = Math.max(0, Math.floor(safeNumber(args.termMonths)));
-  const monthlyRate = Math.max(0, safeNumber(args.annualRatePercent)) / 100 / 12;
+  const isArm = args.interestType === 'arm';
+  const sortedArmChanges = isArm ? [...args.armRateChanges].sort((a, b) => a.effectiveIndex - b.effectiveIndex) : [];
+
+  let currentAnnualRatePercent = Math.max(0, safeNumber(args.annualRatePercent));
+  let monthlyRate = currentAnnualRatePercent / 100 / 12;
+  let scheduledPI = Math.max(0, safeNumber(args.scheduledMonthlyPI));
+  let nextChangeIdx = 0;
 
   let balance = loanAmount;
   const schedule: AmortizationRow[] = [];
@@ -323,10 +355,23 @@ function buildSchedule(args: {
     const { monthIndex0, year } = addMonths(args.startMonthIndex0, args.startYear, i);
     const rowIndex = year * 12 + monthIndex0;
 
+    let isRateChangeMonth = false;
+
+    if (isArm) {
+      // Apply rate change at the start of this month, and recast payment based on remaining term.
+      while (nextChangeIdx < sortedArmChanges.length && rowIndex === sortedArmChanges[nextChangeIdx].effectiveIndex) {
+        currentAnnualRatePercent = Math.max(0, safeNumber(sortedArmChanges[nextChangeIdx].annualRatePercent));
+        monthlyRate = currentAnnualRatePercent / 100 / 12;
+        const remainingMonths = Math.max(1, termMonths - i);
+        scheduledPI = monthlyPaymentPI(balance, currentAnnualRatePercent, remainingMonths);
+        nextChangeIdx += 1;
+        isRateChangeMonth = true;
+      }
+    }
+
     const interest = monthlyRate === 0 ? 0 : balance * monthlyRate;
 
     // Scheduled payment (P&I) cannot exceed what's needed to close.
-    const scheduledPI = Math.max(0, safeNumber(args.scheduledMonthlyPI));
     const maxNeededPI = balance + interest;
     const paymentPI = Math.min(scheduledPI, maxNeededPI);
 
@@ -397,6 +442,9 @@ function buildSchedule(args: {
       index: i + 1,
       monthIndex0,
       year,
+      annualRatePercent: currentAnnualRatePercent,
+      scheduledMonthlyPI: scheduledPI,
+      isRateChangeMonth,
       paymentPI,
       interest,
       principal,

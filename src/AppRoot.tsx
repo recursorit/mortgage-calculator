@@ -112,6 +112,32 @@ export default function AppRoot() {
             ) : null}
 
             <div className="lg:pl-72">
+              <div className="hidden print:block">
+                <div className="mx-auto w-full max-w-3xl px-8 py-10">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-900">
+                    <div className="text-lg font-extrabold tracking-tight">
+                      Printing from the browser is not supported
+                    </div>
+                    <div className="mt-2 text-sm text-slate-700">
+                      This app intentionally hides the interactive UI when
+                      printing, so Ctrl+P will produce a blank page.
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                      Use the in-app{' '}
+                      <span className="font-bold">Print PDF</span> button in the{' '}
+                      <span className="font-bold">Full schedule</span> section
+                      to generate a real PDF and print that.
+                    </div>
+
+                    <div className="mt-4 text-xs text-slate-500">
+                      Tip: If you want a hard copy of the month-by-month
+                      schedule, the PDF export includes it and prints cleanly.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
                 <div className="min-w-0">
                   <Routes>

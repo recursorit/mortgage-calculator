@@ -1,5 +1,16 @@
 import type { DownPaymentType } from './mortgage';
 
+export type InterestTypeRaw = 'fixed' | 'arm';
+
+export type ArmPresetRaw = '5/1' | '7/6' | '5/6' | 'custom';
+
+export type ArmRateChangeRaw = {
+  id: string;
+  effectiveMonthIndex0: number;
+  effectiveYearRaw: string;
+  rateAnnualPercentRaw: string;
+};
+
 export type ExtraMonthlyRangeRaw = {
   id: string;
   amountRaw: string;
@@ -27,6 +38,11 @@ export type MortgageInputsRaw = {
   downPaymentRaw: string;
   loanTermYearsRaw: string;
   interestRateRaw: string;
+
+  interestType?: InterestTypeRaw;
+  armPreset?: ArmPresetRaw;
+  armRateChanges?: ArmRateChangeRaw[];
+  armAdvancedMode?: boolean;
 
   startMonthIndex0: number;
   startYearRaw: string;

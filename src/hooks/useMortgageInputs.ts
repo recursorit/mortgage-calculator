@@ -11,6 +11,11 @@ export function useMortgageInputs(): MortgageInputs {
   const loanTermYearsRaw = useMortgageStore((s) => s.loanTermYearsRaw);
   const interestRateRaw = useMortgageStore((s) => s.interestRateRaw);
 
+  const interestType = useMortgageStore((s) => s.interestType);
+  const armPreset = useMortgageStore((s) => s.armPreset);
+  const armRateChanges = useMortgageStore((s) => s.armRateChanges);
+  const armAdvancedMode = useMortgageStore((s) => s.armAdvancedMode);
+
   const startMonthIndex0 = useMortgageStore((s) => s.startMonthIndex0);
   const startYearRaw = useMortgageStore((s) => s.startYearRaw);
 
@@ -47,6 +52,11 @@ export function useMortgageInputs(): MortgageInputs {
         loanTermYearsRaw,
         interestRateRaw,
 
+        interestType,
+        armPreset,
+        armRateChanges,
+        armAdvancedMode,
+
         startMonthIndex0,
         startYearRaw,
 
@@ -73,6 +83,10 @@ export function useMortgageInputs(): MortgageInputs {
     [
       downPaymentRaw,
       downPaymentType,
+      interestType,
+      armPreset,
+      armRateChanges,
+      armAdvancedMode,
       extraMonthlyRaw,
       extraMonthlyStartMonthIndex0,
       extraMonthlyStartYearRaw,

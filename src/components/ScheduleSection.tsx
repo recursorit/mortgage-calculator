@@ -7,6 +7,7 @@ import {
 } from '@tabler/icons-react';
 
 import { formatCurrency, formatMonthYear } from '../lib/format';
+import { formatPercent } from '../lib/format';
 import type { AmortizationRow } from '../lib/mortgage';
 import { downloadBlobFile, downloadTextFile } from '../lib/download';
 import { createScheduleCsv } from '../lib/scheduleCsv';
@@ -29,6 +30,8 @@ export function ScheduleSection(props: {
 
   // Grab the same parsed inputs used by the app so the PDF matches.
   const inputs = useMortgageInputs();
+
+  const showRateColumn = inputs.interestType === 'arm';
 
   const scheduleJumpYear = useMortgageStore((s) => s.scheduleJumpYear);
   const setScheduleJumpYear = useMortgageStore((s) => s.setScheduleJumpYear);
@@ -243,6 +246,9 @@ export function ScheduleSection(props: {
                     <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                       <tr>
                         <th className="px-3 py-2 whitespace-nowrap">Month</th>
+                        {showRateColumn ? (
+                          <th className="px-3 py-2 whitespace-nowrap">Rate</th>
+                        ) : null}
                         <th className="px-3 py-2 whitespace-nowrap">Total</th>
                         <th className="px-3 py-2 whitespace-nowrap">P&amp;I</th>
                         <th className="px-3 py-2 whitespace-nowrap">Extra</th>
@@ -262,11 +268,34 @@ export function ScheduleSection(props: {
                       {g.rows.map((r) => (
                         <tr
                           key={r.index}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800"
+                          className={
+                            showRateColumn && r.isRateChangeMonth
+                              ? 'bg-sky-50/80 hover:bg-sky-100/80 dark:bg-sky-950/40 dark:hover:bg-sky-950/55'
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }
                         >
                           <td className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-50 whitespace-nowrap">
-                            {formatMonthYear(r.monthIndex0, r.year)}
+                            <div className="flex items-center gap-2">
+                              <span>
+                                {formatMonthYear(r.monthIndex0, r.year)}
+                              </span>
+                              {showRateColumn && r.isRateChangeMonth ? (
+                                <span
+                                  className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-200"
+                                  title="New ARM rate takes effect this month"
+                                >
+                                  ARM reset →{' '}
+                                  {formatPercent(r.annualRatePercent)}
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
+
+                          {showRateColumn ? (
+                            <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                              {formatPercent(r.annualRatePercent)}
+                            </td>
+                          ) : null}
                           <td className="px-3 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {formatCurrency(
                               r.totalToLender + monthlyTaxesCosts,
@@ -300,6 +329,11 @@ export function ScheduleSection(props: {
                         <td className="px-3 py-2 font-extrabold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           Total
                         </td>
+                        {showRateColumn ? (
+                          <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
+                            —
+                          </td>
+                        ) : null}
                         <td className="px-3 py-2 font-bold text-slate-900 dark:text-slate-50 whitespace-nowrap">
                           {formatCurrency(g.totals.totalPayment)}
                         </td>

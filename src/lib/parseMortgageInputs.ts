@@ -6,6 +6,7 @@ import type {
 import type {
   ExtraMonthlyRangeRaw,
   ExtraYearlyRangeRaw,
+  ArmRateChangeRaw,
   MortgageInputsRaw,
 } from './mortgageInputsRaw';
 
@@ -24,6 +25,56 @@ function clampInt(value: number, min: number, max: number): number {
 
 function monthYearToIndex(monthIndex0: number, year: number): number {
   return year * 12 + monthIndex0;
+}
+
+function parseArmRateChanges(
+  rawChanges: ArmRateChangeRaw[] | undefined,
+  loanStartMonthIndex0: number,
+  loanStartYear: number,
+): { changes: Array<{ effectiveIndex: number; annualRatePercent: number }>; valid: boolean } {
+  const input = Array.isArray(rawChanges) ? rawChanges : [];
+  const changes: Array<{ effectiveIndex: number; annualRatePercent: number }> = [];
+  let valid = true;
+
+  const loanStartIndex = monthYearToIndex(loanStartMonthIndex0, loanStartYear);
+
+  for (const ch of input) {
+    const year = clampInt(
+      (() => {
+        const parsed = numberFromInput(ch.effectiveYearRaw);
+        return parsed > 0 ? parsed : loanStartYear;
+      })(),
+      1900,
+      3000,
+    );
+
+    const monthIndex0 = clampInt(
+      Number.isFinite(ch.effectiveMonthIndex0)
+        ? ch.effectiveMonthIndex0
+        : loanStartMonthIndex0,
+      0,
+      11,
+    );
+
+    const effectiveIndex = monthYearToIndex(monthIndex0, year);
+    const annualRatePercent = Math.max(0, numberFromInput(ch.rateAnnualPercentRaw));
+
+    // Basic validation: changes must not be before loan start.
+    if (effectiveIndex < loanStartIndex) valid = false;
+
+    changes.push({ effectiveIndex, annualRatePercent });
+  }
+
+  // Changes must be strictly increasing (no duplicates, no overlaps).
+  const sorted = [...changes].sort((a, b) => a.effectiveIndex - b.effectiveIndex);
+  for (let i = 1; i < sorted.length; i += 1) {
+    if (sorted[i].effectiveIndex <= sorted[i - 1].effectiveIndex) {
+      valid = false;
+      break;
+    }
+  }
+
+  return { changes: sorted, valid };
 }
 
 function validateNonOverlapping(intervals: Array<{ start: number; end: number }>): boolean {
@@ -200,12 +251,20 @@ export function parseMortgageInputs(raw: MortgageInputsRaw): MortgageInputs {
   const finalMonthlyExtra = rangeModeEnabled ? 0 : numberFromInput(raw.extraMonthlyRaw);
   const finalYearlyExtra = rangeModeEnabled ? 0 : numberFromInput(raw.extraYearlyRaw);
 
+  const interestType = raw.interestType === 'arm' ? 'arm' : 'fixed';
+  const armParsed = parseArmRateChanges(raw.armRateChanges, raw.startMonthIndex0, startYear);
+  const armRateChangesValid = armParsed.valid;
+
   return {
     homePrice: numberFromInput(raw.homePriceRaw),
     downPaymentType: raw.downPaymentType,
     downPaymentValue: numberFromInput(raw.downPaymentRaw),
     loanTermYears: numberFromInput(raw.loanTermYearsRaw),
     interestRateAnnualPercent: numberFromInput(raw.interestRateRaw),
+
+    interestType,
+    armRateChanges: interestType === 'arm' && armRateChangesValid ? armParsed.changes : [],
+    armRateChangesValid,
 
     startMonthIndex0: raw.startMonthIndex0,
     startYear,

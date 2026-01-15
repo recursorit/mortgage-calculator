@@ -8,8 +8,11 @@ import {
 
 import type { DownPaymentType } from '../lib/mortgage';
 import type {
+  ArmPresetRaw,
+  ArmRateChangeRaw,
   ExtraMonthlyRangeRaw,
   ExtraYearlyRangeRaw,
+  InterestTypeRaw,
   MortgageInputsRaw,
 } from '../lib/mortgageInputsRaw';
 
@@ -27,6 +30,11 @@ export type MortgageFormState = {
   downPaymentRaw: string;
   loanTermYearsRaw: string;
   interestRateRaw: string;
+
+  interestType: InterestTypeRaw;
+  armPreset: ArmPresetRaw;
+  armRateChanges: ArmRateChangeRaw[];
+  armAdvancedMode: boolean;
 
   startMonthIndex0: number;
   startYearRaw: string;
@@ -55,6 +63,7 @@ export type MortgageFormState = {
   scheduleJumpYear: number;
 
   extraRangeValidationMessage: string;
+  armRateValidationMessage: string;
 };
 
 export type Scenario = {
@@ -73,6 +82,16 @@ export type MortgageFormActions = {
   setDownPaymentRaw: (value: string) => void;
   setLoanTermYearsRaw: (value: string) => void;
   setInterestRateRaw: (value: string) => void;
+
+  setInterestType: (value: InterestTypeRaw) => void;
+  setArmPreset: (value: ArmPresetRaw) => void;
+  addArmRateChange: () => void;
+  updateArmRateChange: (
+    id: string,
+    patch: Partial<Omit<ArmRateChangeRaw, 'id'>>,
+  ) => void;
+  removeArmRateChange: (id: string) => void;
+  setArmAdvancedMode: (value: boolean) => void;
 
   setStartMonthIndex0: (value: number) => void;
   setStartYearRaw: (value: string) => void;
@@ -172,6 +191,11 @@ export function getDefaultMortgageFormState(): MortgageFormState {
     loanTermYearsRaw: '',
     interestRateRaw: '',
 
+    interestType: 'fixed',
+    armPreset: '5/1',
+    armRateChanges: [],
+    armAdvancedMode: false,
+
     startMonthIndex0: 0,
     startYearRaw: String(currentYear),
 
@@ -199,6 +223,7 @@ export function getDefaultMortgageFormState(): MortgageFormState {
     scheduleJumpYear: 1,
 
     extraRangeValidationMessage: '',
+    armRateValidationMessage: '',
   };
 }
 
@@ -234,6 +259,38 @@ function parseYearRaw(value: string): number | null {
   const parsed = Number(trimmed);
   if (!Number.isFinite(parsed)) return null;
   return Math.trunc(parsed);
+}
+
+function validateArmRateChanges(
+  loanStartMonthIndex0: number,
+  loanStartYearRaw: string,
+  changes: ArmRateChangeRaw[],
+): string {
+  if (!Array.isArray(changes) || changes.length === 0) return '';
+
+  const startYear = parseYearRaw(loanStartYearRaw);
+  if (startYear === null) return 'Enter a valid loan start year.';
+  const startSerial = monthYearToSerial(loanStartMonthIndex0, startYear);
+
+  const serials: number[] = [];
+  for (const ch of changes) {
+    const y = parseYearRaw(ch.effectiveYearRaw);
+    if (y === null) return 'ARM changes must have a valid year.';
+    const m = Number.isFinite(ch.effectiveMonthIndex0)
+      ? Math.min(11, Math.max(0, Math.trunc(ch.effectiveMonthIndex0)))
+      : loanStartMonthIndex0;
+    const serial = monthYearToSerial(m, y);
+    if (serial < startSerial) return 'ARM change dates must be on/after the loan start.';
+    serials.push(serial);
+  }
+
+  const sorted = [...serials].sort((a, b) => a - b);
+  for (let i = 1; i < sorted.length; i += 1) {
+    if (sorted[i] <= sorted[i - 1]) {
+      return 'ARM change dates must be unique and in increasing order.';
+    }
+  }
+  return '';
 }
 
 function validateNonOverlappingIntervals(
@@ -358,6 +415,11 @@ function pickInputsRaw(state: MortgageFormState): MortgageInputsRaw {
     loanTermYearsRaw: state.loanTermYearsRaw,
     interestRateRaw: state.interestRateRaw,
 
+    interestType: state.interestType,
+    armPreset: state.armPreset,
+    armRateChanges: state.armRateChanges,
+    armAdvancedMode: state.armAdvancedMode,
+
     startMonthIndex0: state.startMonthIndex0,
     startYearRaw: state.startYearRaw,
 
@@ -397,6 +459,13 @@ function applyInputsRaw(set: (partial: Partial<MortgageFormState>) => void, raw:
     loanTermYearsRaw: raw.loanTermYearsRaw,
     interestRateRaw: raw.interestRateRaw,
 
+    interestType: raw.interestType === 'arm' ? 'arm' : 'fixed',
+    armPreset: raw.armPreset ?? '5/1',
+    armRateChanges: Array.isArray(raw.armRateChanges)
+      ? (raw.armRateChanges as ArmRateChangeRaw[])
+      : [],
+    armAdvancedMode: Boolean(raw.armAdvancedMode),
+
     startMonthIndex0: raw.startMonthIndex0,
     startYearRaw: raw.startYearRaw,
 
@@ -426,6 +495,7 @@ function applyInputsRaw(set: (partial: Partial<MortgageFormState>) => void, raw:
     extraOneTimeYearRaw: raw.extraOneTimeYearRaw,
 
     extraRangeValidationMessage: '',
+    armRateValidationMessage: '',
   });
 }
 
@@ -561,8 +631,154 @@ export const useMortgageStore = create<MortgageStore>()(
       setLoanTermYearsRaw: (value) => set({ loanTermYearsRaw: value }),
       setInterestRateRaw: (value) => set({ interestRateRaw: value }),
 
-      setStartMonthIndex0: (value) => set({ startMonthIndex0: value }),
-      setStartYearRaw: (value) => set({ startYearRaw: value }),
+      setInterestType: (value) => {
+        const next: InterestTypeRaw = value === 'arm' ? 'arm' : 'fixed';
+        set({
+          interestType: next,
+          armRateValidationMessage:
+            next === 'arm'
+              ? validateArmRateChanges(
+                  get().startMonthIndex0,
+                  get().startYearRaw,
+                  get().armRateChanges,
+                )
+              : '',
+        });
+      },
+
+      setArmPreset: (value) => {
+        const preset: ArmPresetRaw =
+          value === '5/1' || value === '7/6' || value === '5/6' || value === 'custom'
+            ? value
+            : '5/1';
+
+        const state = get();
+        if (preset === 'custom') {
+          set({ armPreset: preset });
+          return;
+        }
+
+        const startYear = parseYearRaw(state.startYearRaw) ?? getCurrentYear();
+        const startSerial = monthYearToSerial(state.startMonthIndex0, startYear);
+        const firstChangeMonths = preset === '7/6' ? 84 : 60;
+        const firstSerial = startSerial + firstChangeMonths;
+        const { monthIndex0, year } = serialToMonthYear(firstSerial);
+        const seeded: ArmRateChangeRaw[] = [
+          {
+            id: createId(),
+            effectiveMonthIndex0: monthIndex0,
+            effectiveYearRaw: String(year),
+            rateAnnualPercentRaw: '',
+          },
+        ];
+
+        set({
+          armPreset: preset,
+          armRateChanges: seeded,
+          armRateValidationMessage: validateArmRateChanges(
+            state.startMonthIndex0,
+            state.startYearRaw,
+            seeded,
+          ),
+        });
+      },
+
+      addArmRateChange: () => {
+        const state = get();
+        const startYear = parseYearRaw(state.startYearRaw);
+        if (startYear === null) {
+          set({ armRateValidationMessage: 'Enter a valid loan start year first.' });
+          return;
+        }
+
+        const stepMonths =
+          state.armPreset === '5/6' || state.armPreset === '7/6' ? 6 : 12;
+
+        const startSerial = monthYearToSerial(state.startMonthIndex0, startYear);
+
+        const existingSerials = state.armRateChanges
+          .map((c) => {
+            const y = parseYearRaw(c.effectiveYearRaw);
+            if (y === null) return null;
+            return monthYearToSerial(c.effectiveMonthIndex0, y);
+          })
+          .filter((x): x is number => x !== null)
+          .sort((a, b) => a - b);
+
+        const fixedMonths = state.armPreset === '7/6' ? 84 : state.armPreset === '5/1' || state.armPreset === '5/6' ? 60 : 12;
+        const baseSerial = existingSerials.length
+          ? existingSerials[existingSerials.length - 1] + stepMonths
+          : startSerial + fixedMonths;
+
+        const { monthIndex0, year } = serialToMonthYear(baseSerial);
+        const next: ArmRateChangeRaw = {
+          id: createId(),
+          effectiveMonthIndex0: monthIndex0,
+          effectiveYearRaw: String(year),
+          rateAnnualPercentRaw: '',
+        };
+
+        const nextChanges = [...state.armRateChanges, next];
+        set({
+          armRateChanges: nextChanges,
+          armRateValidationMessage: validateArmRateChanges(
+            state.startMonthIndex0,
+            state.startYearRaw,
+            nextChanges,
+          ),
+        });
+      },
+
+      updateArmRateChange: (id, patch) => {
+        const state = get();
+        const nextChanges = state.armRateChanges.map((c) =>
+          c.id === id ? { ...c, ...patch } : c,
+        );
+        set({
+          armRateChanges: nextChanges,
+          armRateValidationMessage: validateArmRateChanges(
+            state.startMonthIndex0,
+            state.startYearRaw,
+            nextChanges,
+          ),
+        });
+      },
+
+      removeArmRateChange: (id) => {
+        const state = get();
+        const nextChanges = state.armRateChanges.filter((c) => c.id !== id);
+        set({
+          armRateChanges: nextChanges,
+          armRateValidationMessage: validateArmRateChanges(
+            state.startMonthIndex0,
+            state.startYearRaw,
+            nextChanges,
+          ),
+        });
+      },
+
+      setArmAdvancedMode: (value) => set({ armAdvancedMode: value }),
+
+      setStartMonthIndex0: (value) => {
+        const state = get();
+        set({
+          startMonthIndex0: value,
+          armRateValidationMessage:
+            state.interestType === 'arm'
+              ? validateArmRateChanges(value, state.startYearRaw, state.armRateChanges)
+              : state.armRateValidationMessage,
+        });
+      },
+      setStartYearRaw: (value) => {
+        const state = get();
+        set({
+          startYearRaw: value,
+          armRateValidationMessage:
+            state.interestType === 'arm'
+              ? validateArmRateChanges(state.startMonthIndex0, value, state.armRateChanges)
+              : state.armRateValidationMessage,
+        });
+      },
 
       setIncludeTaxesCosts: (value) => set({ includeTaxesCosts: value }),
       setPropertyTaxAnnualRaw: (value) => set({ propertyTaxAnnualRaw: value }),
@@ -840,7 +1056,7 @@ export const useMortgageStore = create<MortgageStore>()(
     {
       name: STORE_KEY,
       storage: persistedStorage,
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
         const persistedObj: Partial<MortgageFormState> =
           persisted && typeof persisted === 'object'
@@ -852,6 +1068,7 @@ export const useMortgageStore = create<MortgageStore>()(
         // v2: add scenarios array
         // v3: add extraMonthly start date fields
         // v4: add extra payment ranges
+        // v5: add ARM fields
         const migrateScenarioInputs = (scenario: Scenario): Scenario => {
           const inputs =
             scenario && typeof scenario.inputs === 'object' && scenario.inputs
@@ -864,6 +1081,12 @@ export const useMortgageStore = create<MortgageStore>()(
               inputs.extraMonthlyStartMonthIndex0 ?? inputs.startMonthIndex0,
             extraMonthlyStartYearRaw:
               inputs.extraMonthlyStartYearRaw ?? inputs.startYearRaw,
+            interestType: inputs.interestType === 'arm' ? 'arm' : 'fixed',
+            armPreset: inputs.armPreset ?? '5/1',
+            armRateChanges: Array.isArray(inputs.armRateChanges)
+              ? (inputs.armRateChanges as ArmRateChangeRaw[])
+              : [],
+            armAdvancedMode: Boolean(inputs.armAdvancedMode),
           };
 
           const ranged = version < 4 ? migrateLegacyInputsToRanges(nextInputs) : nextInputs;
@@ -895,7 +1118,18 @@ export const useMortgageStore = create<MortgageStore>()(
               : [];
           }
 
+          if (version >= 4 && version < 5) {
+            merged.scenarios = merged.scenarios.map(migrateScenarioInputs);
+            merged.interestType = merged.interestType === 'arm' ? 'arm' : 'fixed';
+            merged.armPreset = merged.armPreset ?? '5/1';
+            merged.armRateChanges = Array.isArray(merged.armRateChanges)
+              ? (merged.armRateChanges as ArmRateChangeRaw[])
+              : [];
+            merged.armAdvancedMode = Boolean(merged.armAdvancedMode);
+          }
+
           merged.extraRangeValidationMessage = '';
+          merged.armRateValidationMessage = '';
 
           return merged;
         }
@@ -915,6 +1149,7 @@ export const useMortgageStore = create<MortgageStore>()(
           ? (ranged.extraYearlyRanges as ExtraYearlyRangeRaw[])
           : [];
         upgraded.extraRangeValidationMessage = '';
+        upgraded.armRateValidationMessage = '';
         upgraded.scenarios = [];
         return upgraded;
       },
@@ -930,6 +1165,11 @@ export const useMortgageStore = create<MortgageStore>()(
         downPaymentRaw: state.downPaymentRaw,
         loanTermYearsRaw: state.loanTermYearsRaw,
         interestRateRaw: state.interestRateRaw,
+
+        interestType: state.interestType,
+        armPreset: state.armPreset,
+        armRateChanges: state.armRateChanges,
+        armAdvancedMode: state.armAdvancedMode,
 
         startMonthIndex0: state.startMonthIndex0,
         startYearRaw: state.startYearRaw,
@@ -958,6 +1198,7 @@ export const useMortgageStore = create<MortgageStore>()(
         scheduleJumpYear: state.scheduleJumpYear,
 
         extraRangeValidationMessage: state.extraRangeValidationMessage,
+        armRateValidationMessage: state.armRateValidationMessage,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
