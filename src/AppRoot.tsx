@@ -8,6 +8,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { MortgageCalculatorPage } from './pages/MortgageCalculatorPage';
 import { RefinanceBreakEvenPage } from './pages/RefinanceBreakEvenPage';
 import { ScenarioComparisonPage } from './pages/ScenarioComparisonPage';
+import { UserProfilePage } from './pages/UserProfilePage';
 
 function SideNav(props: { onNavigate?: () => void }) {
   const onNavigate = props.onNavigate;
@@ -55,6 +56,10 @@ function SideNav(props: { onNavigate?: () => void }) {
             onClick={onNavigate}
           >
             Refinance break-even
+          </NavLink>
+
+          <NavLink to="/profile" className={linkClassName} onClick={onNavigate}>
+            Profile
           </NavLink>
         </div>
       </nav>
@@ -158,6 +163,10 @@ export default function AppRoot() {
                       element={
                         <RefinanceBreakEvenPage onOpenNav={openMobileNav} />
                       }
+                    />
+                    <Route
+                      path="/profile"
+                      element={<UserProfilePage onOpenNav={openMobileNav} />}
                     />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

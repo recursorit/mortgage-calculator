@@ -7,6 +7,7 @@ import {
   IconRotate,
   IconSun,
 } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '../auth/useAuth';
 import { debugAuthLog } from '../lib/debug';
@@ -66,7 +67,13 @@ export function HeaderBar(props: {
             auth.user ? (
               <>
                 <div className="hidden max-w-[240px] truncate rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:block">
-                  {auth.user.email ?? 'Signed in'}
+                  <Link
+                    to="/profile"
+                    className="block max-w-[240px] truncate focus:outline-none"
+                    aria-label="Open profile"
+                  >
+                    {auth.user.email ?? 'Signed in'}
+                  </Link>
                 </div>
 
                 {auth.scenarioSyncStatus !== 'idle' ? (
