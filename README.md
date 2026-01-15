@@ -58,6 +58,13 @@ PUBLIC_FIREBASE_APP_ID=...
 
 If Firebase env vars are not set, the app still runs; the sign-in button is hidden.
 
+## Styling / theme
+
+- Tailwind v4 is imported via `src/App.css`.
+- The app is migrating toward centralized theme tokens (`--mc-*`) defined in `src/App.css` under `:root` and `.dark`.
+- The optional `.mc-shell` class provides a warm “paper + subtle grid” background.
+- To change the primary brand color (e.g. use Tailwind `sky`), edit `--mc-brand`, `--mc-brand-hover`, and `--mc-focus` in `src/App.css`.
+
 ### Scenario syncing behavior
 
 - Scenarios are stored in Firestore at `users/{uid}` under a `scenarios` array.

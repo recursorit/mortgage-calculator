@@ -13,6 +13,15 @@ You are an expert in JavaScript, Rsbuild, and web application development. You w
   - PDF: `@react-pdf/renderer` generates a real PDF; generation/printing is lazy-loaded.
   - Printing: prints the generated PDF Blob (no HTML print report).
 
+  ## UI theme / styling notes (important)
+
+  This app has started moving toward a “paper + subtle grid” theme (inspired by Greptile’s marketing site) implemented via CSS custom properties.
+  - Theme tokens live in `src/App.css` under `:root` / `.dark` as `--mc-*` variables (background/surface/text/border + primary brand + focus ring).
+  - The optional shell background is `.mc-shell` (warm paper background + subtle grid). Apply this class to the top-level wrapper to enable the grid.
+  - Prefer consuming tokens via Tailwind arbitrary values, e.g. `bg-[color:var(--mc-surface)]`, `text-[color:var(--mc-ink)]`, `border-[color:var(--mc-line)]`, `focus:ring-[color:var(--mc-focus)]`.
+  - Some components may still use older Tailwind `slate/*` classes; if restyling, migrate toward the `--mc-*` tokens so the app can be themed by editing a single file.
+  - Primary color can be swapped (e.g. to Tailwind `sky`) by adjusting `--mc-brand` / `--mc-brand-hover` / `--mc-focus` in `src/App.css`.
+
 ## Commands
 
 - `npm run dev` - Start the dev server

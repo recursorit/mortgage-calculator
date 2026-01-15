@@ -8,6 +8,14 @@
 - Zustand (state) + `persist` middleware
 - `@react-pdf/renderer` for real PDF generation
 
+## UI theme tokens
+
+- Styling is migrating toward a tokenized theme in `src/App.css` using `--mc-*` CSS variables.
+  - `:root` defines the light theme tokens.
+  - `.dark` overrides tokens for dark mode (toggled by the app via the persisted theme setting).
+- A “paper + subtle grid” background is available via the `.mc-shell` class.
+- Prefer components to use these tokens via Tailwind arbitrary values (e.g. `bg-[color:var(--mc-surface)]`, `border-[color:var(--mc-line)]`) to keep palette changes centralized.
+
 ## High-level flow
 
 1. **User edits inputs** in the UI (raw strings in store).

@@ -6,7 +6,7 @@
 body {
   margin: 0;
   overflow-x: hidden;
-  color: #0f172a;
+  color: var(--mc-ink);
   font-family:
     ui-sans-serif,
     system-ui,
@@ -18,12 +18,73 @@ body {
     Arial,
     'Apple Color Emoji',
     'Segoe UI Emoji';
-  background: #ffffff;
+  background: var(--mc-bg);
+}
+
+/*
+  Greptile-inspired theme tokens.
+  (Layout + colors only; no third-party assets.)
+*/
+:root {
+  --mc-bg: #f6f3ee;
+  --mc-surface: #fbfaf7;
+  --mc-surface-2: #f1ece4;
+  --mc-ink: #121212;
+  --mc-muted: #5e5b55;
+  --mc-line: #e5ddd2;
+
+  --mc-brand: #0b3a2a;
+  --mc-brand-hover: #093224;
+  --mc-focus: rgba(11, 58, 42, 0.18);
+}
+
+.dark {
+  --mc-bg: #070a09;
+  --mc-surface: #0d1210;
+  --mc-surface-2: #121917;
+  --mc-ink: #f3f4f1;
+  --mc-muted: #a8ada6;
+  --mc-line: #1f2a26;
+
+  --mc-brand: #2dd4bf;
+  --mc-brand-hover: #22c7b1;
+  --mc-focus: rgba(45, 212, 191, 0.22);
 }
 
 .dark body {
-  color: #e2e8f0;
-  background: #020617;
+  color: var(--mc-ink);
+  background: var(--mc-bg);
+}
+
+/* App background: warm paper + subtle grid */
+.mc-shell {
+  background-color: var(--mc-bg);
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--mc-line) 40%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--mc-line) 40%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 72px 72px;
+  background-position: center;
+}
+
+@supports not (color: color-mix(in oklab, #000 0%, #fff)) {
+  .mc-shell {
+    background-image:
+      linear-gradient(to right, rgba(229, 221, 210, 0.35) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(229, 221, 210, 0.35) 1px, transparent 1px);
+  }
+  .dark .mc-shell {
+    background-image:
+      linear-gradient(to right, rgba(31, 42, 38, 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(31, 42, 38, 0.6) 1px, transparent 1px);
+  }
 }
 
 @media screen {

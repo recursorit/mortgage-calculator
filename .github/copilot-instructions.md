@@ -61,3 +61,10 @@ This repo is a React 18 + TypeScript mortgage calculator built with Rsbuild.
 
 - Components are small and focused (see `src/components/*` and `src/components/ui/*`).
 - Accessibility: ensure buttons have clear labels; maintain keyboard focus styles.
+
+## UI theme tokens
+
+- Global theme tokens are defined in `src/App.css` as `--mc-*` CSS variables (in `:root` and `.dark`).
+- `mc-shell` is an optional top-level class that applies a warm “paper” background with a subtle grid.
+- Prefer using the tokens via Tailwind arbitrary values (e.g. `bg-[color:var(--mc-surface)]`, `text-[color:var(--mc-ink)]`, `border-[color:var(--mc-line)]`, `focus:ring-[color:var(--mc-focus)]`) so palette changes stay centralized.
+- If changing the brand color (e.g. to Tailwind `sky`), do it by editing `--mc-brand`, `--mc-brand-hover`, and `--mc-focus` in `src/App.css`.
