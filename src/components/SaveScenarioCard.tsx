@@ -1,3 +1,9 @@
+import {
+  IconCheck,
+  IconChevronDown,
+  IconDeviceFloppy,
+  IconFolderCog,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -110,25 +116,13 @@ export function SaveScenarioCard(props: { className?: string }) {
             aria-label="Open saved scenarios"
           >
             Saved scenarios
-            <svg
-              viewBox="0 0 20 20"
-              width="16"
-              height="16"
+            <IconChevronDown
+              size={16}
               aria-hidden="true"
-              focusable="false"
               className={
                 'transition ' + (isPickerOpen ? 'rotate-180' : 'rotate-0')
               }
-            >
-              <path
-                d="M5.5 7.5L10 12l4.5-4.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </button>
 
           {isPickerOpen ? (
@@ -151,6 +145,11 @@ export function SaveScenarioCard(props: { className?: string }) {
                     className="flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-900 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
                     title={s.name}
                   >
+                    <IconCheck
+                      size={16}
+                      aria-hidden="true"
+                      className="mt-0.5"
+                    />
                     <span className="min-w-0 flex-1 truncate">{s.name}</span>
                     <span className="shrink-0 text-xs font-bold text-slate-500 dark:text-slate-400">
                       Apply
@@ -167,8 +166,9 @@ export function SaveScenarioCard(props: { className?: string }) {
 
         <Link
           to="/scenarios"
-          className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
         >
+          <IconFolderCog size={18} aria-hidden="true" />
           Manage
         </Link>
       </div>
@@ -192,8 +192,9 @@ export function SaveScenarioCard(props: { className?: string }) {
             const nextName = (scenarioDraftName || suggested).trim();
             saveScenario(nextName);
           }}
-          className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+          className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
         >
+          <IconDeviceFloppy size={18} aria-hidden="true" />
           Save scenario
         </button>
       </div>

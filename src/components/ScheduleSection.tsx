@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import {
+  IconFileTypeCsv,
+  IconFileTypePdf,
+  IconLoader2,
+  IconPrinter,
+} from '@tabler/icons-react';
 
 import { formatCurrency, formatMonthYear } from '../lib/format';
 import type { AmortizationRow } from '../lib/mortgage';
@@ -115,8 +121,9 @@ export function ScheduleSection(props: {
                 <button
                   type="button"
                   onClick={exportScheduleCsv}
-                  className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto"
                 >
+                  <IconFileTypeCsv size={18} aria-hidden="true" />
                   Export CSV
                 </button>
 
@@ -125,10 +132,24 @@ export function ScheduleSection(props: {
                   onClick={exportPdf}
                   disabled={isPdfBusy}
                   className={
-                    'inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto'
+                    'inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto'
                   }
                 >
-                  {isPdfBusy ? 'Working…' : 'Export PDF'}
+                  {isPdfBusy ? (
+                    <>
+                      <IconLoader2
+                        size={18}
+                        className="animate-spin"
+                        aria-hidden="true"
+                      />
+                      Working…
+                    </>
+                  ) : (
+                    <>
+                      <IconFileTypePdf size={18} aria-hidden="true" />
+                      Export PDF
+                    </>
+                  )}
                 </button>
 
                 <button
@@ -136,9 +157,18 @@ export function ScheduleSection(props: {
                   onClick={printPdf}
                   disabled={isPdfBusy}
                   className={
-                    'col-span-2 inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:col-span-1 sm:w-auto'
+                    'col-span-2 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:col-span-1 sm:w-auto'
                   }
                 >
+                  {isPdfBusy ? (
+                    <IconLoader2
+                      size={18}
+                      className="animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <IconPrinter size={18} aria-hidden="true" />
+                  )}
                   Print PDF
                 </button>
               </div>

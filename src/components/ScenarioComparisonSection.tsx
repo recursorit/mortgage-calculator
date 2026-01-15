@@ -1,4 +1,10 @@
 import { useMemo, useState } from 'react';
+import {
+  IconCheck,
+  IconDeviceFloppy,
+  IconPencil,
+  IconTrash,
+} from '@tabler/icons-react';
 
 import { calculateMortgage } from '../lib/mortgage';
 import { formatCurrency, formatInteger, formatMonthYear } from '../lib/format';
@@ -54,8 +60,9 @@ function ScenarioRow(props: {
           <button
             type="button"
             onClick={props.onApply}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
           >
+            <IconCheck size={14} aria-hidden="true" />
             Apply
           </button>
           <button
@@ -64,15 +71,17 @@ function ScenarioRow(props: {
               const next = window.prompt('Rename scenario', props.name);
               if (next) props.onRename(next);
             }}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800"
           >
+            <IconPencil size={14} aria-hidden="true" />
             Rename
           </button>
           <button
             type="button"
             onClick={props.onDelete}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-900 shadow-sm transition hover:bg-rose-100 focus:outline-none focus:ring-4 focus:ring-rose-200 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100 dark:hover:bg-rose-950/60 dark:focus:ring-rose-900/50"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-900 shadow-sm transition hover:bg-rose-100 focus:outline-none focus:ring-4 focus:ring-rose-200 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100 dark:hover:bg-rose-950/60 dark:focus:ring-rose-900/50"
           >
+            <IconTrash size={14} aria-hidden="true" />
             Delete
           </button>
         </div>
@@ -141,8 +150,9 @@ export function ScenarioComparisonSection() {
             saveScenario(newName);
             setNewName('');
           }}
-          className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:ring-slate-800 sm:w-auto"
         >
+          <IconDeviceFloppy size={18} aria-hidden="true" />
           Save current
         </button>
       </div>

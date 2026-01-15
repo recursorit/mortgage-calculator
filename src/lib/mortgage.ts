@@ -2,6 +2,19 @@ import { addMonths } from './format';
 
 export type DownPaymentType = 'percent' | 'amount';
 
+export type ExtraMonthlyRange = {
+  amount: number;
+  startIndex: number; // inclusive, (year * 12 + monthIndex0)
+  endIndex: number; // inclusive; Infinity means no end
+};
+
+export type ExtraYearlyRange = {
+  amount: number;
+  paymentMonthIndex0: number; // 0-11
+  startIndex: number; // inclusive
+  endIndex: number; // inclusive; Infinity means no end
+};
+
 export interface MortgageInputs {
   homePrice: number;
   downPaymentType: DownPaymentType;
@@ -21,9 +34,18 @@ export interface MortgageInputs {
   otherCostsMonthly: number;
 
   extraMonthly: number;
+  extraMonthlyStartMonthIndex0: number;
+  extraMonthlyStartYear: number;
+
+  extraMonthlyRanges: ExtraMonthlyRange[];
+
   extraYearly: number;
   extraYearlyMonthIndex0: number;
   extraYearlyStartYear: number;
+
+  extraYearlyRanges: ExtraYearlyRange[];
+
+  extraRangesValid: boolean;
 
   extraOneTime: number;
   extraOneTimeMonthIndex0: number;
@@ -135,6 +157,19 @@ function shouldApplyYearlyExtra(
   return rowMonthIndex0 === extraYearlyMonthIndex0;
 }
 
+function shouldApplyMonthlyExtra(
+  rowMonthIndex0: number,
+  rowYear: number,
+  extraMonthly: number,
+  startMonthIndex0: number,
+  startYear: number,
+): boolean {
+  if (extraMonthly <= 0) return false;
+  const rowIndex = rowYear * 12 + rowMonthIndex0;
+  const startIndex = startYear * 12 + startMonthIndex0;
+  return rowIndex >= startIndex;
+}
+
 function shouldApplyOneTimeExtra(
   rowMonthIndex0: number,
   rowYear: number,
@@ -168,6 +203,10 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
     Math.max(0, safeNumber(inputs.hoaMonthly)) +
     Math.max(0, safeNumber(inputs.otherCostsMonthly));
 
+  const useRanges =
+    inputs.extraRangesValid &&
+    (inputs.extraMonthlyRanges.length > 0 || inputs.extraYearlyRanges.length > 0);
+
   const schedule = buildSchedule({
     loanAmount,
     termMonths,
@@ -175,10 +214,14 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
     startMonthIndex0: clamp(inputs.startMonthIndex0, 0, 11),
     startYear: Math.max(0, Math.floor(safeNumber(inputs.startYear))),
     scheduledMonthlyPI,
-    extraMonthly: Math.max(0, safeNumber(inputs.extraMonthly)),
-    extraYearly: Math.max(0, safeNumber(inputs.extraYearly)),
+    extraMonthly: useRanges ? 0 : Math.max(0, safeNumber(inputs.extraMonthly)),
+    extraMonthlyStartMonthIndex0: clamp(inputs.extraMonthlyStartMonthIndex0, 0, 11),
+    extraMonthlyStartYear: Math.max(0, Math.floor(safeNumber(inputs.extraMonthlyStartYear))),
+    extraMonthlyRanges: useRanges ? inputs.extraMonthlyRanges : [],
+    extraYearly: useRanges ? 0 : Math.max(0, safeNumber(inputs.extraYearly)),
     extraYearlyMonthIndex0: clamp(inputs.extraYearlyMonthIndex0, 0, 11),
     extraYearlyStartYear: Math.max(0, Math.floor(safeNumber(inputs.extraYearlyStartYear))),
+    extraYearlyRanges: useRanges ? inputs.extraYearlyRanges : [],
     extraOneTime: Math.max(0, safeNumber(inputs.extraOneTime)),
     extraOneTimeMonthIndex0: clamp(inputs.extraOneTimeMonthIndex0, 0, 11),
     extraOneTimeYear: Math.max(0, Math.floor(safeNumber(inputs.extraOneTimeYear))),
@@ -192,9 +235,13 @@ export function calculateMortgage(inputs: MortgageInputs): MortgageCalculation {
     startYear: Math.max(0, Math.floor(safeNumber(inputs.startYear))),
     scheduledMonthlyPI,
     extraMonthly: 0,
+    extraMonthlyStartMonthIndex0: clamp(inputs.extraMonthlyStartMonthIndex0, 0, 11),
+    extraMonthlyStartYear: Math.max(0, Math.floor(safeNumber(inputs.extraMonthlyStartYear))),
+    extraMonthlyRanges: [],
     extraYearly: 0,
     extraYearlyMonthIndex0: clamp(inputs.extraYearlyMonthIndex0, 0, 11),
     extraYearlyStartYear: Math.max(0, Math.floor(safeNumber(inputs.extraYearlyStartYear))),
+    extraYearlyRanges: [],
     extraOneTime: 0,
     extraOneTimeMonthIndex0: clamp(inputs.extraOneTimeMonthIndex0, 0, 11),
     extraOneTimeYear: Math.max(0, Math.floor(safeNumber(inputs.extraOneTimeYear))),
@@ -254,9 +301,13 @@ function buildSchedule(args: {
   startYear: number;
   scheduledMonthlyPI: number;
   extraMonthly: number;
+  extraMonthlyStartMonthIndex0: number;
+  extraMonthlyStartYear: number;
+  extraMonthlyRanges: ExtraMonthlyRange[];
   extraYearly: number;
   extraYearlyMonthIndex0: number;
   extraYearlyStartYear: number;
+  extraYearlyRanges: ExtraYearlyRange[];
   extraOneTime: number;
   extraOneTimeMonthIndex0: number;
   extraOneTimeYear: number;
@@ -270,6 +321,7 @@ function buildSchedule(args: {
 
   for (let i = 0; i < termMonths && balance > 0.005; i += 1) {
     const { monthIndex0, year } = addMonths(args.startMonthIndex0, args.startYear, i);
+    const rowIndex = year * 12 + monthIndex0;
 
     const interest = monthlyRate === 0 ? 0 : balance * monthlyRate;
 
@@ -281,7 +333,7 @@ function buildSchedule(args: {
     let principal = Math.max(0, paymentPI - interest);
     principal = Math.min(principal, balance);
 
-    const yearlyExtra = shouldApplyYearlyExtra(
+    const yearlyExtraLegacy = shouldApplyYearlyExtra(
       monthIndex0,
       year,
       args.extraYearly,
@@ -290,6 +342,19 @@ function buildSchedule(args: {
     )
       ? args.extraYearly
       : 0;
+
+    let yearlyExtraRanges = 0;
+    if (args.extraYearlyRanges.length) {
+      for (const r of args.extraYearlyRanges) {
+        if (r.amount <= 0) continue;
+        if (rowIndex < r.startIndex) continue;
+        if (rowIndex > r.endIndex) continue;
+        if (monthIndex0 !== r.paymentMonthIndex0) continue;
+        yearlyExtraRanges += r.amount;
+      }
+    }
+
+    const yearlyExtra = yearlyExtraLegacy + yearlyExtraRanges;
 
     const oneTimeExtra = shouldApplyOneTimeExtra(
       monthIndex0,
@@ -301,7 +366,29 @@ function buildSchedule(args: {
       ? args.extraOneTime
       : 0;
 
-    const rawExtra = Math.max(0, args.extraMonthly) + Math.max(0, yearlyExtra) + Math.max(0, oneTimeExtra);
+    const monthlyExtraLegacy = shouldApplyMonthlyExtra(
+      monthIndex0,
+      year,
+      args.extraMonthly,
+      args.extraMonthlyStartMonthIndex0,
+      args.extraMonthlyStartYear,
+    )
+      ? args.extraMonthly
+      : 0;
+
+    let monthlyExtraRanges = 0;
+    if (args.extraMonthlyRanges.length) {
+      for (const r of args.extraMonthlyRanges) {
+        if (r.amount <= 0) continue;
+        if (rowIndex < r.startIndex) continue;
+        if (rowIndex > r.endIndex) continue;
+        monthlyExtraRanges += r.amount;
+      }
+    }
+
+    const monthlyExtra = monthlyExtraLegacy + monthlyExtraRanges;
+
+    const rawExtra = Math.max(0, monthlyExtra) + Math.max(0, yearlyExtra) + Math.max(0, oneTimeExtra);
     const extraPrincipal = Math.min(rawExtra, Math.max(0, balance - principal));
 
     balance = Math.max(0, balance - principal - extraPrincipal);

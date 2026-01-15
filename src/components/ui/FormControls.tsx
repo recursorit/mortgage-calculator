@@ -93,3 +93,45 @@ export function Toggle(props: {
     </button>
   );
 }
+
+export function Switch(props: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  ariaLabel?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={props.checked}
+      aria-label={props.ariaLabel ?? props.label}
+      onClick={() => props.onChange(!props.checked)}
+      className={
+        'inline-flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition ' +
+        'hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 ' +
+        'dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:focus:ring-slate-800 ' +
+        (props.className ?? '')
+      }
+    >
+      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {props.label}
+      </span>
+      <span
+        className={
+          'relative inline-flex h-6 w-11 flex-none items-center rounded-full p-0.5 transition-colors duration-200 ease-in-out ' +
+          (props.checked ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-600')
+        }
+        aria-hidden="true"
+      >
+        <span
+          className={
+            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ' +
+            (props.checked ? 'translate-x-5' : 'translate-x-0')
+          }
+        />
+      </span>
+    </button>
+  );
+}

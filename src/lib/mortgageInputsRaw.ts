@@ -1,5 +1,26 @@
 import type { DownPaymentType } from './mortgage';
 
+export type ExtraMonthlyRangeRaw = {
+  id: string;
+  amountRaw: string;
+  startMonthIndex0: number;
+  startYearRaw: string;
+  endEnabled: boolean;
+  endMonthIndex0: number;
+  endYearRaw: string;
+};
+
+export type ExtraYearlyRangeRaw = {
+  id: string;
+  amountRaw: string;
+  paymentMonthIndex0: number;
+  startMonthIndex0: number;
+  startYearRaw: string;
+  endEnabled: boolean;
+  endMonthIndex0: number;
+  endYearRaw: string;
+};
+
 export type MortgageInputsRaw = {
   homePriceRaw: string;
   downPaymentType: DownPaymentType;
@@ -18,9 +39,16 @@ export type MortgageInputsRaw = {
   otherCostsMonthlyRaw: string;
 
   extraMonthlyRaw: string;
+  extraMonthlyStartMonthIndex0?: number;
+  extraMonthlyStartYearRaw?: string;
+
+  extraMonthlyRanges?: ExtraMonthlyRangeRaw[];
+
   extraYearlyRaw: string;
   extraYearlyMonthIndex0: number;
   extraYearlyStartYearRaw: string;
+
+  extraYearlyRanges?: ExtraYearlyRangeRaw[];
 
   extraOneTimeRaw: string;
   extraOneTimeMonthIndex0: number;
